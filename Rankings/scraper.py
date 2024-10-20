@@ -1,0 +1,154 @@
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import InvalidSessionIdException
+from bs4 import BeautifulSoup
+from Rankings.models import StudentInfo, Marks
+from django.db import IntegrityError
+import os
+import time
+import random
+from selenium.common.exceptions import WebDriverException
+
+# Set up Chrome options for headless mode and performance
+chrome_options = Options()
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+chrome_options.add_argument('--ignore-certificate-errors')
+chrome_options.add_argument('--log-level=3')
+chrome_options.add_argument('--disable-gpu')
+chrome_options.add_argument('--disable-extensions')
+chrome_options.add_argument('--disable-popup-blocking')
+chrome_options.add_argument('--disable-features=NetworkService,NetworkServiceInProcess')
+chrome_options.add_argument('--blink-settings=imagesEnabled=false')  # Disable images
+chrome_options.add_argument('user-agent=Mozilla/5.0 (Linux; Android 9; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36')
+
+prefs = {
+    "profile.managed_default_content_settings.images": 2,  # Disable images
+    "profile.default_content_setting_values.notifications": 2,  # Disable notifications
+    "profile.managed_default_content_settings.stylesheets": 2,
+}
+chrome_options.add_experimental_option("prefs", prefs)
+
+# Set service log path to suppress ChromeDriver logs
+service = Service(log_path=os.devnull)
+
+def scrape_roll_number(roll_number, retries=3):
+    # sourcery skip: low-code-quality
+    driver = None
+    try:
+        driver = webdriver.Chrome(options=chrome_options, service=service)
+        url = 'https://hscresult.bise-ctg.gov.bd/h1624/individual/'
+        driver.get(url)
+
+        # Existing scraping logic
+        roll_input = WebDriverWait(driver, 5).until(
+            EC.visibility_of_element_located((By.NAME, 'roll'))
+        )
+        roll_input.send_keys(str(roll_number))
+
+        submit_button = WebDriverWait(driver, 5).until(
+            EC.element_to_be_clickable((By.XPATH, '//input[@type="submit"]'))
+        )
+        submit_button.click()
+
+        WebDriverWait(driver, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.tftable2'))
+        )
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+
+        # Parsing marks logic (same as before)
+        subject_rows = soup.select('.tftable2 tr')
+        marks_data = {}
+        for row in subject_rows:
+            cols = row.find_all('td')
+            if len(cols) == 2:
+                subject_code = cols[0].text.strip().split('(')[-1].replace(')', '')
+                marks_text = cols[1].text.strip().split('(')[-1].replace(')', '').strip()
+                marks = int(marks_text) if marks_text.isdigit() else None
+                marks_data[subject_code] = marks
+
+        # Get the student
+        if '101' in marks_data and '107' in marks_data:
+            exam_result = StudentInfo.objects.get(roll_no=roll_number)
+            # Create a Marks object and return it for bulk creation
+            new_marks = Marks(
+                student=exam_result,
+                bangla=marks_data.get('101', 0),
+                english=marks_data.get('107', 0),
+                ict=marks_data.get('275', 0),
+                physics=marks_data.get('174', 0),
+                chemistry=marks_data.get('176', 0),
+                biology=marks_data.get('178', 0),
+                higher_math=marks_data.get('265', 0),
+                statistics=marks_data.get('129', 0),
+                accounting=marks_data.get('253', 0),
+                management=marks_data.get('277', 0),
+                finance=marks_data.get('292', 0),
+                production=marks_data.get('286', 0),
+                economics=marks_data.get('109', 0),
+                logic=marks_data.get('121', 0),
+                sociology=marks_data.get('117', 0),
+                social_work=marks_data.get('271', 0),
+                home_science=marks_data.get('273', 0),
+                islamic_studies=marks_data.get('249', 0),
+                total_marks=sum([marks_data.get(code, 0) for code in ['101', '107', '275', '174', '176', '178', '265', '129', '253', '277', '292', '286', '109', '121', '117', '271', '273']])
+            )
+            return new_marks
+            
+    except InvalidSessionIdException:
+        # Restart WebDriver when session is invalid
+        driver.quit()
+        driver = start_new_webdriver_instance()
+
+    except WebDriverException as e:
+        print(f"WebDriverException for roll number {roll_number}: {e}")
+        if retries > 0:
+            print(f"Retrying roll number {roll_number} ({retries} retries left)...")
+            time.sleep(random.uniform(2, 5))  # Wait a bit before retrying
+            return scrape_roll_number(roll_number, retries=retries - 1)
+        else:
+            print(f"Failed to process roll number {roll_number} after multiple retries.")
+            
+    except IntegrityError as e:
+        print(f"IntegrityError processing roll number {roll_number}: {e}")
+    except Exception as e:
+        print(f"Error processing roll number {roll_number}: {e}")
+    finally:
+        if driver:
+            driver.quit()  # Always quit the driver to avoid session leakage
+    return None
+
+# List of roll numbers you want to scrape
+roll_numbers = list(range(509505, 532090))
+
+# List to accumulate all Marks objects
+marks_list = []
+
+for roll in roll_numbers:
+    marks = scrape_roll_number(roll)
+    if marks:
+        marks_list.append(marks)
+
+# Bulk create the Marks objects in the database
+Marks.objects.bulk_create(marks_list, batch_size=1000)
+        
+        
+# roll_no = soup.find_all('td')[1].text.strip()
+# name = soup.find_all('td')[3].text.strip()
+# board = soup.find_all('td')[5].text.strip()
+# father_name = soup.find_all('td')[7].text.strip()
+# group = soup.find_all('td')[9].text.strip()
+# mother_name = soup.find_all('td')[11].text.strip()
+# session = soup.find_all('td')[13].text.strip()
+# reg_no = soup.find_all('td')[15].text.strip()
+# type_of_result = soup.find_all('td')[17].text.strip()
+# institute = soup.find_all('td')[19].text.strip()
+# result = soup.find_all('td')[21].text.strip()
+# gpa = soup.find_all('td')[23].text.strip()
+
+# not_created: 500180, 500740

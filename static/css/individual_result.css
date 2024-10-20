@@ -1,0 +1,30 @@
+.student-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.student-container h1{
+  margin-bottom: 40px;
+}
+
+.student-info {
+  margin-bottom: 80px;
+}
+
+.subject-marks th{
+  text-align: left;
+  font-size: 1.2rem;
+  padding: 6px 25px;
+  border: 1px solid rgb(234, 255, 255);
+}
+
+.subject-marks td{
+  color: rgb(235, 235, 235);
+  font-weight: 500;
+  padding: 4px 25px;
+  border: 1px solid rgb(234, 255, 255);
+}
+
+.subject-marks strong {
+  font-weight: 600;
+}
