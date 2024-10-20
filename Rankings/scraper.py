@@ -8,10 +8,12 @@ from selenium.common.exceptions import InvalidSessionIdException
 from bs4 import BeautifulSoup
 from Rankings.models import StudentInfo, Marks
 from django.db import IntegrityError
+from concurrent.futures import ThreadPoolExecutor
 import os
 import time
 import random
 from selenium.common.exceptions import WebDriverException
+
 
 # Set up Chrome options for headless mode and performance
 chrome_options = Options()
@@ -54,7 +56,7 @@ def scrape_roll_number(roll_number, retries=3):
         submit_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.XPATH, '//input[@type="submit"]'))
         )
-        submit_button.click()
+        driver.execute_script("document.querySelector('form').submit();")
 
         WebDriverWait(driver, 5).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '.tftable2'))
@@ -62,7 +64,7 @@ def scrape_roll_number(roll_number, retries=3):
         soup = BeautifulSoup(driver.page_source, 'html.parser')
 
         # Parsing marks logic (same as before)
-        subject_rows = soup.select('.tftable2 tr')
+        subject_rows = soup.select('.tftable2 tbody tr')
         marks_data = {}
         for row in subject_rows:
             cols = row.find_all('td')
@@ -72,33 +74,64 @@ def scrape_roll_number(roll_number, retries=3):
                 marks = int(marks_text) if marks_text.isdigit() else None
                 marks_data[subject_code] = marks
 
-        # Get the student
-        if '101' in marks_data and '107' in marks_data:
-            exam_result = StudentInfo.objects.get(roll_no=roll_number)
-            # Create a Marks object and return it for bulk creation
-            new_marks = Marks(
-                student=exam_result,
-                bangla=marks_data.get('101', 0),
-                english=marks_data.get('107', 0),
-                ict=marks_data.get('275', 0),
-                physics=marks_data.get('174', 0),
-                chemistry=marks_data.get('176', 0),
-                biology=marks_data.get('178', 0),
-                higher_math=marks_data.get('265', 0),
-                statistics=marks_data.get('129', 0),
-                accounting=marks_data.get('253', 0),
-                management=marks_data.get('277', 0),
-                finance=marks_data.get('292', 0),
-                production=marks_data.get('286', 0),
-                economics=marks_data.get('109', 0),
-                logic=marks_data.get('121', 0),
-                sociology=marks_data.get('117', 0),
-                social_work=marks_data.get('271', 0),
-                home_science=marks_data.get('273', 0),
-                islamic_studies=marks_data.get('249', 0),
-                total_marks=sum([marks_data.get(code, 0) for code in ['101', '107', '275', '174', '176', '178', '265', '129', '253', '277', '292', '286', '109', '121', '117', '271', '273']])
+        # Map subject codes to fields in the Marks model
+        bangla = marks_data.get('101', 0)
+        english = marks_data.get('107', 0)
+        ict = marks_data.get('275', 0)
+        physics = marks_data.get('174', 0)
+        chemistry = marks_data.get('176', 0)
+        biology = marks_data.get('178', 0)
+        higher_math = marks_data.get('265', 0)
+        statistics = marks_data.get('129', 0)
+        finance = marks_data.get('292', 0)
+        management = marks_data.get('277', 0)
+        accounting = marks_data.get('253', 0)
+        production = marks_data.get('286', 0)
+        economics = marks_data.get('109', 0)
+        logic = marks_data.get('121', 0)
+        sociology = marks_data.get('117', 0)
+        social_work = marks_data.get('271', 0)
+        home_science = marks_data.get('273', 0)
+        islamic_history = marks_data.get('267', 0)
+        civics = marks_data.get('269', 0)
+
+        # Update or create the marks for the existing student
+        try:
+            student_info = StudentInfo.objects.get(roll_no=roll_number)
+
+            # Update or create marks
+            Marks.objects.update_or_create(
+                student=student_info,
+                defaults={
+                    'bangla': bangla,
+                    'english': english,
+                    'ict': ict,
+                    'physics': physics,
+                    'chemistry': chemistry,
+                    'biology': biology,
+                    'higher_math': higher_math,
+                    'statistics': statistics,
+                    'accounting': accounting,
+                    'management': management,
+                    'finance': finance,
+                    'production': production,
+                    'economics': economics,
+                    'logic': logic,
+                    'sociology': sociology,
+                    'social_work': social_work,
+                    'home_science': home_science,
+                    'islamic_history': islamic_history,
+                    'civics': civics,
+                    'total_marks': sum([
+                        bangla, english, ict, physics, chemistry, biology,
+                        higher_math, statistics, accounting, management,
+                        finance, production, economics, logic, sociology,
+                        social_work, home_science, islamic_history, civics
+                    ])
+                }
             )
-            return new_marks
+        except StudentInfo.DoesNotExist:
+            print(f"Student with roll number {roll_number} does not exist.")
             
     except InvalidSessionIdException:
         # Restart WebDriver when session is invalid
@@ -110,7 +143,7 @@ def scrape_roll_number(roll_number, retries=3):
         if retries > 0:
             print(f"Retrying roll number {roll_number} ({retries} retries left)...")
             time.sleep(random.uniform(2, 5))  # Wait a bit before retrying
-            return scrape_roll_number(roll_number, retries=retries - 1)
+            scrape_roll_number(roll_number, retries=retries - 1)
         else:
             print(f"Failed to process roll number {roll_number} after multiple retries.")
             
@@ -121,21 +154,13 @@ def scrape_roll_number(roll_number, retries=3):
     finally:
         if driver:
             driver.quit()  # Always quit the driver to avoid session leakage
-    return None
 
 # List of roll numbers you want to scrape
 roll_numbers = list(range(509505, 532090))
 
-# List to accumulate all Marks objects
-marks_list = []
-
 for roll in roll_numbers:
-    marks = scrape_roll_number(roll)
-    if marks:
-        marks_list.append(marks)
+  scrape_roll_number(roll)
 
-# Bulk create the Marks objects in the database
-Marks.objects.bulk_create(marks_list, batch_size=1000)
         
         
 # roll_no = soup.find_all('td')[1].text.strip()
