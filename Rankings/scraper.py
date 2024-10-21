@@ -156,7 +156,7 @@ def scrape_roll_number(roll_number, retries=3):
             driver.quit()  # Always quit the driver to avoid session leakage
 
 # List of roll numbers you want to scrape
-roll_numbers = list(range(509505, 532090))
+roll_numbers = list(range(527123, 532090))
 
 for roll in roll_numbers:
   scrape_roll_number(roll)
