@@ -4,16 +4,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import InvalidSessionIdException
+from selenium.common.exceptions import InvalidSessionIdException, WebDriverException
 from bs4 import BeautifulSoup
 from Rankings.models import StudentInfo, Marks
 from django.db import IntegrityError
 from concurrent.futures import ThreadPoolExecutor
 import os
 import time
-import random
-from selenium.common.exceptions import WebDriverException
-
 
 # Set up Chrome options for headless mode and performance
 chrome_options = Options()
@@ -26,30 +23,29 @@ chrome_options.add_argument('--disable-gpu')
 chrome_options.add_argument('--disable-extensions')
 chrome_options.add_argument('--disable-popup-blocking')
 chrome_options.add_argument('--disable-features=NetworkService,NetworkServiceInProcess')
-chrome_options.add_argument('--blink-settings=imagesEnabled=false')  # Disable images
+chrome_options.add_argument('--blink-settings=imagesEnabled=false')
 chrome_options.add_argument('user-agent=Mozilla/5.0 (Linux; Android 9; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36')
 
 prefs = {
     "profile.managed_default_content_settings.images": 2,  # Disable images
     "profile.default_content_setting_values.notifications": 2,  # Disable notifications
-    "profile.managed_default_content_settings.stylesheets": 2,
+    "profile.managed_default_content_settings.stylesheets": 2, # Disable Stylesheets
 }
 chrome_options.add_experimental_option("prefs", prefs)
 
-# Set service log path to suppress ChromeDriver logs
-service = Service(log_path=os.devnull)
+# Reuse driver session across multiple scrapes
+def init_driver():
+    service = Service(log_path=os.devnull)
+    return webdriver.Chrome(options=chrome_options, service=service)
 
-def scrape_roll_number(roll_number, retries=3):
-    # sourcery skip: low-code-quality
-    driver = None
+def scrape_roll_number(roll_number, driver):
     try:
-        driver = webdriver.Chrome(options=chrome_options, service=service)
         url = 'https://hscresult.bise-ctg.gov.bd/h1624/individual/'
         driver.get(url)
 
-        # Existing scraping logic
+        # Scraping logic
         roll_input = WebDriverWait(driver, 5).until(
-            EC.visibility_of_element_located((By.NAME, 'roll'))
+            EC.presence_of_element_located((By.NAME, 'roll'))
         )
         roll_input.send_keys(str(roll_number))
 
@@ -62,8 +58,21 @@ def scrape_roll_number(roll_number, retries=3):
             EC.presence_of_element_located((By.CSS_SELECTOR, '.tftable2'))
         )
         soup = BeautifulSoup(driver.page_source, 'html.parser')
+        
+        roll_no = soup.find_all('td')[1].text.strip()
+        name = soup.find_all('td')[3].text.strip()
+        board = soup.find_all('td')[5].text.strip()
+        father_name = soup.find_all('td')[7].text.strip()
+        group = soup.find_all('td')[9].text.strip()
+        mother_name = soup.find_all('td')[11].text.strip()
+        session = soup.find_all('td')[13].text.strip()
+        reg_no = soup.find_all('td')[15].text.strip()
+        type_of_result = soup.find_all('td')[17].text.strip()
+        institute = soup.find_all('td')[19].text.strip()
+        result = soup.find_all('td')[21].text.strip()
+        gpa = soup.find_all('td')[23].text.strip()
 
-        # Parsing marks logic (same as before)
+        # Parsing marks logic
         subject_rows = soup.select('.tftable2 tbody tr')
         marks_data = {}
         for row in subject_rows:
@@ -71,7 +80,7 @@ def scrape_roll_number(roll_number, retries=3):
             if len(cols) == 2:
                 subject_code = cols[0].text.strip().split('(')[-1].replace(')', '')
                 marks_text = cols[1].text.strip().split('(')[-1].replace(')', '').strip()
-                marks = int(marks_text) if marks_text.isdigit() else None
+                marks = int(marks_text) if marks_text.isdigit() else 0
                 marks_data[subject_code] = marks
 
         # Map subject codes to fields in the Marks model
@@ -97,83 +106,76 @@ def scrape_roll_number(roll_number, retries=3):
 
         # Update or create the marks for the existing student
         try:
-            student_info = StudentInfo.objects.get(roll_no=roll_number)
+            student_info, created = StudentInfo.objects.get_or_create(roll_no=roll_no,
+            defaults={
+                'name': name,
+                'board': board,
+                'father_name': father_name,
+                'group': group,
+                'mother_name': mother_name,
+                'session': session,
+                'reg_no': reg_no,
+                'type_of_result': type_of_result,
+                'institute': institute,
+                'result': result,
+                'gpa': gpa
+            }
+        )
 
-            # Update or create marks
-            Marks.objects.update_or_create(
+            Marks.objects.create(
                 student=student_info,
-                defaults={
-                    'bangla': bangla,
-                    'english': english,
-                    'ict': ict,
-                    'physics': physics,
-                    'chemistry': chemistry,
-                    'biology': biology,
-                    'higher_math': higher_math,
-                    'statistics': statistics,
-                    'accounting': accounting,
-                    'management': management,
-                    'finance': finance,
-                    'production': production,
-                    'economics': economics,
-                    'logic': logic,
-                    'sociology': sociology,
-                    'social_work': social_work,
-                    'home_science': home_science,
-                    'islamic_history': islamic_history,
-                    'civics': civics,
-                    'total_marks': sum([
-                        bangla, english, ict, physics, chemistry, biology,
-                        higher_math, statistics, accounting, management,
-                        finance, production, economics, logic, sociology,
-                        social_work, home_science, islamic_history, civics
-                    ])
-                }
+                bangla=bangla,
+                english=english,
+                ict=ict,
+                physics=physics,
+                chemistry=chemistry,
+                biology=biology,
+                higher_math=higher_math,
+                statistics=statistics,
+                accounting=accounting,
+                management=management,
+                finance=finance,
+                production=production,
+                economics=economics,
+                logic=logic,
+                sociology=sociology,
+                social_work=social_work,
+                home_science=home_science,
+                islamic_history=islamic_history,
+                civics=civics,
+                total_marks=sum([
+                    bangla, english, ict, physics, chemistry, biology,
+                    higher_math, statistics, accounting, management,
+                    finance, production, economics, logic, sociology,
+                    social_work, home_science, islamic_history, civics
+                ])
             )
         except StudentInfo.DoesNotExist:
             print(f"Student with roll number {roll_number} does not exist.")
-            
-    except InvalidSessionIdException:
-        # Restart WebDriver when session is invalid
-        driver.quit()
-        driver = start_new_webdriver_instance()
 
     except WebDriverException as e:
         print(f"WebDriverException for roll number {roll_number}: {e}")
-        if retries > 0:
-            print(f"Retrying roll number {roll_number} ({retries} retries left)...")
-            time.sleep(random.uniform(2, 5))  # Wait a bit before retrying
-            scrape_roll_number(roll_number, retries=retries - 1)
-        else:
-            print(f"Failed to process roll number {roll_number} after multiple retries.")
-            
-    except IntegrityError as e:
-        print(f"IntegrityError processing roll number {roll_number}: {e}")
-    except Exception as e:
-        print(f"Error processing roll number {roll_number}: {e}")
-    finally:
-        if driver:
-            driver.quit()  # Always quit the driver to avoid session leakage
 
-# List of roll numbers you want to scrape
-roll_numbers = list(range(527123, 532090))
+# List of roll numbers to scrape
+roll_numbers = [300001]
 
-for roll in roll_numbers:
-  scrape_roll_number(roll)
+driver = init_driver()
+
+for idx, roll in enumerate(roll_numbers):
+    scrape_roll_number(roll, driver)
+    
+    # Restart WebDriver every 500 roll numbers
+    if idx > 0 and idx % 500 == 0:
+        driver.quit()
+        print(f"Restarting driver after {idx} roll numbers...")
+        driver = init_driver()
+
+# Quit the driver after all scraping is done
+driver.quit()
+
 
         
         
-# roll_no = soup.find_all('td')[1].text.strip()
-# name = soup.find_all('td')[3].text.strip()
-# board = soup.find_all('td')[5].text.strip()
-# father_name = soup.find_all('td')[7].text.strip()
-# group = soup.find_all('td')[9].text.strip()
-# mother_name = soup.find_all('td')[11].text.strip()
-# session = soup.find_all('td')[13].text.strip()
-# reg_no = soup.find_all('td')[15].text.strip()
-# type_of_result = soup.find_all('td')[17].text.strip()
-# institute = soup.find_all('td')[19].text.strip()
-# result = soup.find_all('td')[21].text.strip()
-# gpa = soup.find_all('td')[23].text.strip()
+
 
 # not_created: 500180, 500740

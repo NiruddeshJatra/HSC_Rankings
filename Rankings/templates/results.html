@@ -9,7 +9,7 @@
   <link rel="stylesheet" href="{% static 'css/home.css' %}">
 
   <div class="results-container">
-    <h1>{{ group|capfirst }} Student Ranks</h1>
+    <h1>{{ group|lower|title }} Student Ranks</h1>
 
     <table>
       <thead>
@@ -25,14 +25,12 @@
       <tbody>
         {% for student in students %}
           <tr>
-            <a href="{% url 'rankings:individual' student.roll_no %}">
-              <td>{{ student.rank }}</td>
-              <td>{{ student.roll_no }}</td>
-              <td>{{ student.name }}</td>
-              <td>{{ student.marks.total_marks }}</td>
-              <td>{{ student.gpa }}</td>
-              <td>{{ student.institute }}</td>
-            </a>
+            <td>{{ student.rank }}</td>
+            <td class="individual-link"><a href="{% url 'rankings:individual' roll_no=student.roll_no %}">{{ student.roll_no }}</a></td>
+            <td class="individual-link"><a href="{% url 'rankings:individual' roll_no=student.roll_no %}">{{ student.name }}</a></td>
+            <td>{{ student.marks.total_marks }}</td>
+            <td>{{ student.gpa }}</td>
+            <td>{{ student.institute }}</td>
           </tr>
         {% endfor %}
       </tbody>
@@ -42,29 +40,29 @@
   <!-- Pagination for more results -->
   <div class="pagination">
     <span class="step-links">
-      {% if page_obj.has_previous %}
+      {% if students.has_previous %}
         <a href="?page=1">&laquo; first</a>
-        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        <a href="?page={{ students.previous_page_number }}">previous</a>
       {% endif %}
 
       <span class="current">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        Page {{ students.number }} of {{ students.paginator.num_pages }}.
       </span>
 
-      {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}">next</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-      {% endif %}
-    </span>
+      <span class="page-numbers">
+        {% for i in page_range %}
+          {% if i == students.number %}
+            <strong>{{ i }}</strong>
+          {% else %}
+            <a href="?page={{ i }}">{{ i }}</a>
+          {% endif %}
+      {% endfor %}
+      </span>
 
-    <span class="page-numbers">
-      {% for i in page_range %}
-        {% if i == page_obj.number %}
-          <strong>{{ i }}</strong>
-        {% else %}
-          <a href="?page={{ i }}">{{ i }}</a>
-        {% endif %}
-    {% endfor %}
+      {% if students.has_next %}
+        <a href="?page={{ students.next_page_number }}">next</a>
+        <a href="?page={{ students.paginator.num_pages }}">last &raquo;</a>
+      {% endif %}
     </span>
 </div>
 
