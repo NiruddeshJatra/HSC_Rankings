@@ -88,9 +88,9 @@ HSC Rankings is a web application built with Django to display the ranking of st
 
 ## Screenshots
 
-![Home Page](static/screeshots/home.png)
+![Home Page](static/screenshots/home.png)
 
-![Student Rankings](static/screeshots/home_footer.png)
+![Student Rankings](static/screenshots/home_footer.png)
 
 ![Student Details](static/screenshots/individual.png)
 
