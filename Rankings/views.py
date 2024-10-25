@@ -3,6 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import StudentInfo, Marks
 
 def results(request, group="SCIENCE"):
+  group = group.replace("_", " ")
   if roll_no := request.GET.get('roll_no'):
     return redirect('rankings:individual', roll_no=roll_no)
 
