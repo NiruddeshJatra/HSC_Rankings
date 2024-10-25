@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  Board Exam Rankings - HSC
+{% endblock %}
+
+{% block content %}
+  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+
+  <div class="results-container">
+    <h1>{{ group|lower|title }} Student Ranks</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Roll Number</th>
+          <th>Name</th>
+          <th>Total Marks</th>
+          <th>GPA</th>
+          <th>Institute</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+          <tr>
+            <td>{{ student.rank }}</td>
+            <td class="individual-link"><a href="{% url 'rankings:individual' roll_no=student.roll_no %}">{{ student.roll_no }}</a></td>
+            <td class="individual-link"><a href="{% url 'rankings:individual' roll_no=student.roll_no %}">{{ student.name }}</a></td>
+            <td>{{ student.marks.total_marks }}</td>
+            <td>{{ student.gpa }}</td>
+            <td>{{ student.institute }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination for more results -->
+  <div class="pagination">
+    <span class="step-links">
+      {% if students.has_previous %}
+        <a href="?page=1">&laquo; first</a>
+        <a href="?page={{ students.previous_page_number }}">previous</a>
+      {% endif %}
+
+      <span class="current">
+        Page {{ students.number }} of {{ students.paginator.num_pages }}.
+      </span>
+
+      <span class="page-numbers">
+        {% for i in page_range %}
+          {% if i == students.number %}
+            <strong>{{ i }}</strong>
+          {% else %}
+            <a href="?page={{ i }}">{{ i }}</a>
+          {% endif %}
+      {% endfor %}
+      </span>
+
+      {% if students.has_next %}
+        <a href="?page={{ students.next_page_number }}">next</a>
+        <a href="?page={{ students.paginator.num_pages }}">last &raquo;</a>
+      {% endif %}
+    </span>
+</div>
+
+{% endblock %}

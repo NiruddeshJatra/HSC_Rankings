@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{% block title %} {% endblock %}</title>
+    <meta
+      name="description"
+      content="A website conatining the ranks of board exam results of Bangladesh"
+    />
+    <meta name="author" content="niruddesh jatra" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="{% static 'css/global.css' %}" />
+    <link rel="icon" href="{% static 'images/logo.ico' %}" />
+  </head>
+  <body>
+
+    <!-- navigation bar -->
+    <nav>
+      <div class="group-btn">
+        <a href="{% url 'rankings:results' group='SCIENCE' %}">Science</a>
+        <a href="{% url 'rankings:results' group='BUSINESS STUDIES' %}">Commerce</a>
+        <a href="{% url 'rankings:results' group='HUMANITIES' %}">Arts</a>
+      </div>
+      <div class="search-btn">
+        <form method="get" action="{% url 'rankings:results_default' %}">
+          <input type="text" name="roll_no" placeholder="Search by roll number" required>
+          <button type="submit">Search</button>
+        </form>
+        {% if error %}
+          <p>{{ error }}</p>
+        {% endif %}
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">{% block content %} {% endblock %}</main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="contact-info">
+          <h3>Contact</h3>
+          <p>
+            Email:<a href="mailto:work.nj3515@gmail.com" target="_blank"
+              >&nbsp;work.nj3515@gmail.com</a
+            >
+          </p>
+          <p>
+            Phone:<a href="tel:+801626181662" target="_blank"
+              >&nbsp;+801626181662</a
+            >
+          </p>
+          <p>
+            Github:<a href="https://github.com/NiruddeshJatra" target="_blank"
+              >&nbsp;NiruddeshJatra</a
+            >
+          </p>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

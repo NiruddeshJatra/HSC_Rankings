@@ -1,0 +1,8 @@
+{
+  "builds": [
+    { "src": "HSC_Rankings/asgi.py", "use": "@vercel/python" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "HSC_Rankings/asgi.py" }
+  ]
+}
