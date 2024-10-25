@@ -67,7 +67,7 @@ TEMPLATES = [
     },
 ]
 
-ASGI_APPLICATION = "myproject.asgi.application"
+ASGI_APPLICATION = "HSC_Rankings.asgi.application"
 WSGI_APPLICATION = 'HSC_Rankings.wsgi.application'
 
 # Database
