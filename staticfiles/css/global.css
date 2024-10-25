@@ -1,0 +1,160 @@
+@import url('https://fonts.googleapis.com/css2?family=Arima:wght@100..700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: "Arima", system-ui;
+  box-sizing: border-box;
+}
+
+a {
+  text-decoration: none;
+  color: rgb(175, 174, 174);
+}
+
+a:hover {
+  color: rgb(100, 100, 100);
+}
+
+p {
+  color: #f5f9f8;
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.06rem;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family :'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  font-size: 2.4rem;
+  color: #f0e5e5;
+}
+
+/* Navigation Bar */
+nav {
+  display: flex;
+  justify-content: space-between;
+  height: 65px;
+  width: 100%;
+  padding: 1em 3em;
+  background-color: #333;
+}
+
+nav a{
+  margin: auto 20px;
+  font-size: 1.4rem;
+}
+
+nav button {
+  padding: 2px 10px;
+}
+
+/* Main Content */
+main {
+  background: radial-gradient(circle, #a9a9a9, #7b7b7b, #444444);
+  padding: 3em 3em;
+}
+
+/* Footer */
+footer {
+  background-color: #333;
+  color: white;
+  padding: 35px 0;
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.contact-info p {
+  margin: 5px 0;
+  font-weight: 400;
+  margin-bottom: 5px;
+}
+
+.contact-info h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+}
+
+@media (max-width: 950px) {
+  nav {
+    height: 55px;
+    padding: 0.75em 1.8em; 
+  }
+
+  nav a {
+    font-size: 1.1rem;
+    margin: auto 10px;
+  }
+
+  nav button {
+    font-size: 0.7rem;
+    padding: 0.5px 8.5px;
+  }
+
+  .search-btn input {
+    width: 140px;
+    font-size: 0.7rem;
+  }
+
+  main {
+    padding: 1.2em 2em;
+  }
+
+  footer {
+    padding: 30px 0;
+  }
+
+  .contact-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+
+  .contact-info p {
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+  }
+}
+
+@media (max-width: 550px) {
+  nav {
+    height: 45px;
+    padding: 0.5em 1em; 
+  }
+
+  nav a {
+    font-size: 0.7rem;
+    margin: auto 5px;
+  }
+
+  nav button {
+    font-size: 0.6rem;
+    padding: 0 7px;
+  }
+
+  .search-btn input {
+    width: 80px;
+    font-size: 0.5rem;
+  }
+
+  main {
+    padding: 0.6em 0.2em;
+  }
+
+  footer {
+    padding: 25px 0;
+  }
+
+  .contact-info h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+
+  .contact-info p {
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+  }
+}

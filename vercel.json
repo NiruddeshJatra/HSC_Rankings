@@ -1,8 +1,10 @@
 {
   "builds": [
-    { "src": "HSC_Rankings/asgi.py", "use": "@vercel/python" }
+    { "src": "HSC_Rankings/wsgi.py", 
+      "use": "@vercel/python",
+      "config": {"maxLambdaSize": "15mb", "runtime": "python3.12.6"} }
   ],
   "routes": [
-    { "src": "/(.*)", "dest": "HSC_Rankings/asgi.py" }
+    { "src": "/(.*)", "dest": "HSC_Rankings/wsgi.py" }
   ]
 }

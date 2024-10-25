@@ -1,0 +1,175 @@
+.results-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  max-width: 1200px;
+  margin: 15px auto;
+  padding: 50px 25px;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 20px 0;
+  background-color: #383b3b;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  min-width: 600px;
+}
+
+thead {
+  background-color: #35373b;
+}
+
+th, td {
+  text-align: center;
+  color: #e0e0e0;
+  padding: 1em 1.5em;
+  font-size: 0.9rem;
+}
+
+th {
+  font-weight: 600;
+  border-bottom: 2px solid #888;
+  letter-spacing: 0.08rem;
+}
+
+tbody tr {
+  border-bottom: 1px solid #888;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #464a4a;
+  transition: background-color 0.3s, transform 0.4s ease-in-out;
+}
+
+tbody td:last-child {
+  font-size: 0.8rem;
+  white-space: normal;
+  min-width: 300px;
+}
+
+tbody tr:hover {
+  background: #424448;
+  cursor: pointer;
+  transform: scale(1.01);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+td {
+  color: #dbdbd9;
+  font-weight: 500;
+  letter-spacing: 0.05rem;
+}
+
+a {
+  color: #666;
+}
+
+a:hover {
+  color: #444;
+}
+
+.individual-link a{
+  color: rgb(188, 238, 238);
+}
+
+.individual-link a:hover{
+  color: rgb(177, 190, 190);
+}
+
+/* Pagination styling */
+.pagination {
+  text-align: center;
+  margin-top: 90px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.pagination a {
+  margin: 0 5px;
+  padding: 8px 16px;
+  background-color: #888;
+  color: white;
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background-color 0.3s;
+}
+
+.pagination a:hover {
+  background-color: #666;
+}
+
+.pagination .current {
+  font-weight: bold;
+  margin: 0 5px;
+  padding: 8px 16px;
+  background-color: #444;
+  color: #ddd;
+  border-radius: 5px;
+}
+
+@media (max-width: 950px) {
+  .results-container {
+    padding: 40px 20px;
+    font-size: 0.9rem;
+  }
+
+  .results-container h1 {
+    font-size: 1.5rem;
+  }
+
+  th, td {
+    font-size: 0.8rem;
+    padding: 1em 0.8em;
+  }
+
+  tbody td:last-child {
+    font-size: 0.7rem;
+  }
+
+  .pagination {
+    margin-top: 60px;
+    font-size: 0.8rem;
+  }
+
+  .pagination a {
+    margin: 0 4px;
+    padding: 6px 12px;
+  }
+
+  .pagination .current {
+    margin: 0 4px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 550px) {
+  .results-container h1 {
+    font-size: 1.3rem;
+  }
+
+  th, td {
+    font-size: 0.6rem;
+    padding: 0.9em 0.7em;
+  }
+
+  tbody td:last-child {
+    font-size: 0.5rem;
+  }
+
+  .pagination {
+    margin-top: 30px;
+    font-size: 0.6rem;
+  }
+
+  .pagination a {
+    margin: 0 3px;
+    padding: 3px 8px;
+  }
+
+  .pagination .current {
+    margin: 0 3px;
+    padding: 4px 8px;
+  }
+}
