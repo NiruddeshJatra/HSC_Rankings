@@ -42,12 +42,12 @@ table {
 strong {
   font-weight: 600;
   font-size: 1rem;
-  color: rgb(232, 226, 225);
+  color: rgb(244, 235, 234);
 }
 
 .share-buttons {
   display: flex;
-  justify-content: center;
+  align-items: center;
 }
 
 @media (max-width: 1055px) {
