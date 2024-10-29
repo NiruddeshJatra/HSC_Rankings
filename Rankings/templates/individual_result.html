@@ -187,4 +187,34 @@
       </table>
     </div>
   </div>
+
+  <!-- Social Share Buttons -->
+  <div class="share-buttons">
+    <p style="font-size: 0.8rem;">Share this result:</p>
+    
+    <!-- X -->
+    <a href="https://x.com/share?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20HSC%20results!" target="_blank">
+      <img src="{% static 'images/twitter.png' %}" alt="Share on X"  style="width: 24px; height: 24px; margin: 0 8px;"/>
+    </a>
+
+    <!-- Facebook -->
+    <a href="https://www.facebook.com/sharer.php?u={{ request.build_absolute_uri }}" target="_blank">
+      <img src="{% static 'images/facebook.png' %}" alt="Share on Facebook" style="width: 24px; height: 24px; margin: 0 8px;"/>
+    </a>
+
+    <!-- WhatsApp -->
+    <a href="https://api.whatsapp.com/send?text=Check%20out%20{{ student.name }}'s%20HSC%20results!%20{{ request.build_absolute_uri }}" target="_blank">
+      <img src="{% static 'images/whatsapp.png' %}" alt="Share on WhatsApp" style="width: 24px; height: 24px; margin: 0 8px;"/>
+    </a>
+
+    <!-- Instagram -->
+    <a href="https://instagram.com" target="_blank" title="Copy the link and share it on Instagram">
+      <img src="{% static 'images/instagram.png' %}" alt="Share on Instagram" style="width: 24px; height: 24px; margin: 0 8px;"/>
+    </a>
+
+    <!-- Telegram -->
+    <a href="https://telegram.me/share/url?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20HSC%20results!" target="_blank">
+      <img src="{% static 'images/telegram.png' %}" alt="Share on Telegram" style="width: 24px; height: 24px; margin: 0 8px;"/>
+    </a>
+  </div>
 {% endblock %}

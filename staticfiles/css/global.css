@@ -7,12 +7,12 @@
   box-sizing: border-box;
 }
 
-a {
+nav a, footer a {
   text-decoration: none;
   color: rgb(175, 174, 174);
 }
 
-a:hover {
+nav a:hover, footer a:hover {
   color: rgb(100, 100, 100);
 }
 
@@ -44,13 +44,24 @@ nav a{
   font-size: 1.4rem;
 }
 
+nav input {
+  background-color: #3B3B3B;
+  border: 1px solid rgb(149, 149, 149);
+  border-radius: 3px;
+  color: rgb(175, 174, 174);
+}
+
 nav button {
+  background-color: #7B7B7B;
   padding: 2px 10px;
+  color: white;
+  border: 1px solid transparent;
+  border-radius: 3px;
 }
 
 /* Main Content */
 main {
-  background: radial-gradient(circle, #a9a9a9, #7b7b7b, #444444);
+  background: radial-gradient(circle, #a4a4a4, #7b7b7b, #444444);
   padding: 3em 3em;
 }
 

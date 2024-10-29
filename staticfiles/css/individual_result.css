@@ -45,6 +45,16 @@ strong {
   color: rgb(221, 215, 212);
 }
 
+.share-buttons {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+}
+
+.share-buttons a {
+  text-decoration: none;
+}
+
 @media (max-width: 1055px) {
   .student-container {
     margin: 25px 15px;

@@ -7,10 +7,23 @@
     <title>{% block title %} {% endblock %}</title>
     <meta
       name="description"
-      content="A website conatining the ranks of board exam results of Bangladesh"
+      content="HSC Rankings of Board Exam Results in Bangladesh for Science, Commerce, and Arts groups"
     />
     <meta name="author" content="niruddesh jatra" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="HSC Rankings - Board Exam Results Bangladesh" />
+    <meta property="og:description" content="View rankings and results for HSC board exams in Bangladesh, categorized by Science, Commerce, and Arts groups." />
+    <meta property="og:image" content="{% static 'screenshots/home.png' %}" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="HSC Rankings - Bangladesh Board Exam Results" />
+    <meta name="twitter:description" content="Find board exam rankings for HSC in Science, Commerce, and Arts groups." />
+    <meta name="twitter:image" content="{% static 'screenshots/home.png' %}" />
+
     <link rel="stylesheet" href="{% static 'css/global.css' %}" />
     <link rel="icon" href="{% static 'images/logo.ico' %}" />
   </head>

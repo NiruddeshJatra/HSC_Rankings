@@ -62,16 +62,9 @@ td {
   letter-spacing: 0.05rem;
 }
 
-a {
-  color: #666;
-}
-
-a:hover {
-  color: #444;
-}
-
 .individual-link a{
   color: rgb(188, 238, 238);
+  text-decoration: none;
 }
 
 .individual-link a:hover{
