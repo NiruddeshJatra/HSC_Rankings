@@ -42,17 +42,12 @@ table {
 strong {
   font-weight: 600;
   font-size: 1rem;
-  color: rgb(221, 215, 212);
+  color: rgb(244, 235, 234);
 }
 
 .share-buttons {
   display: flex;
-  justify-content: center;
-  padding: 10px;
-}
-
-.share-buttons a {
-  text-decoration: none;
+  align-items: center;
 }
 
 @media (max-width: 1055px) {
@@ -130,5 +125,9 @@ strong {
   .subject-marks td{
     font-size: 0.7rem;
     padding: 3px 15px;
+  }
+
+  .share-buttons img {
+    margin: 0 5px;
   }
 }
