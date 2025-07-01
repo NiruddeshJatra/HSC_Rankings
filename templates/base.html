@@ -7,47 +7,118 @@
     <title>{% block title %} {% endblock %}</title>
     <meta
       name="description"
-      content="HSC Rankings of Board Exam Results in Bangladesh for Science, Commerce, and Arts groups"
+      content="Check SSC, HSC Result 2025 Bangladesh - Board Exam Rankings, Merit List for Science, Commerce, Arts groups. SSC HSC results, board rankings, individual student results."
     />
-    <meta name="author" content="niruddesh jatra" />
+    <meta 
+      name="keywords" 
+      content="HSC result 2025, Bangladesh board exam, SSC result 2025, SSC ranking, HSC ranking, merit list, Chittagong board, Dhaka board, science group ranking, commerce group ranking, arts group ranking, board exam results, SSC Chittagong, SSC Dhaka, HSC Chittagong, HSC Dhaka" 
+    />
+    <meta name="author" content="SSC, HSC Rankings Bangladesh" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="google-site-verification" content="npRsPcwc1npjGdnGB1kwqHefFB5fYXbKest-KOM3wVQ" />
+    <meta name="google-site-verification"     content="npRsPcwc1npjGdnGB1kwqHefFB5fYXbKest-KOM3wVQ" />
 
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="HSC Rankings - Board Exam Results Bangladesh" />
-    <meta property="og:description" content="View rankings and results for HSC board exams in Bangladesh, categorized by Science, Commerce, and Arts groups." />
+    <link rel="canonical" href="{% block canonical_url %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/{% endblock %}" />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="bingbot" content="index, follow" />
+    <meta name="yandexbot" content="index, follow" />
+    <meta name="sitemap" content="https://hsc-rankings-niruddesh-jatras-projects.vercel.app/sitemap.xml" />
+
+    <meta property="og:title" content="{% block og_title %}SSC, HSC Result 2025 Bangladesh - Board Exam Rankings{% endblock %}" />
+    <meta property="og:description" content="{% block og_description %}Check latest SSC, HSC board exam results and rankings for Bangladesh. Find merit lists for Science, Commerce, and Arts groups from all education boards.{% endblock %}" />
     <meta property="og:image" content="{% static 'screenshots/home.png' %}" />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="{% block og_url %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/{% endblock %}" />
+    <meta property="og:site_name" content="HSC Rankings Bangladesh" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Twitter Card Meta Tags -->
+    <!-- Enhanced Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="HSC Rankings - Bangladesh Board Exam Results" />
-    <meta name="twitter:description" content="Find board exam rankings for HSC in Science, Commerce, and Arts groups." />
+    <meta name="twitter:title" content="{% block twitter_title %}SSC, HSC Result 2025 Bangladesh - Board Exam Rankings{% endblock %}" />
+    <meta name="twitter:description" content="{% block twitter_description %}Find SSC, HSC board exam rankings for Bangladesh. Check merit lists for Science, Commerce, Arts groups.{% endblock %}" />
     <meta name="twitter:image" content="{% static 'screenshots/home.png' %}" />
+    <meta name="twitter:site" content="@SSCHSCRankingsBD" />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="language" content="English" />
+    <meta name="revisit-after" content="1 days" />
+    <meta name="distribution" content="global" />
+    <meta name="rating" content="general" />
+    <meta http-equiv="content-language" content="en-us" />
+    
+    <!-- Geo-targeting -->
+    <meta name="geo.region" content="BD" />
+    <meta name="geo.country" content="Bangladesh" />
+    <meta name="geo.placename" content="Chittagong, Bangladesh" />
 
     <link rel="stylesheet" href="{% static 'css/global.css' %}" />
     <link rel="icon" href="{% static 'images/logo.ico' %}" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="{% static 'css/global.css' %}" as="style" />
+    <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
   </head>
-  <!-- Google tag (gtag.js) -->
+  
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0SFEVH35GN"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-
     gtag('config', 'G-0SFEVH35GN');
   </script>
 
+  <!-- Enhanced Schema Markup -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "SSC, HSC Rankings Bangladesh",
+      "url": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/",
+      "description": "Comprehensive SSC, HSC board exam results and rankings for Bangladesh education boards including Science, Commerce, and Arts groups",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "BD",
+        "addressRegion": "Chittagong"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Bangladesh"
+      },
+      "sameAs": [
+        "https://www.facebook.com/SSCHSCRankingsBD",
+        "https://twitter.com/SSCHSCRankingsBD"
+      ],
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/?roll_no={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+  </script>
+
+  <!-- Additional Schema for Website -->
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "url": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/",
-      "name": "HSC Rankings",
-      "description": "View rankings and results for HSC board exams in Bangladesh, categorized by Science, Commerce, and Arts groups.",
+      "name": "SSC, HSC Rankings Bangladesh",
+      "description": "Find SSC, HSC board exam results and rankings for Bangladesh. Check merit lists, individual student results, and college rankings.",
       "publisher": {
         "@type": "Organization",
-        "name": "Niruddesh Jatra"
+        "name": "SSC, HSC Rankings Bangladesh"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/?roll_no={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
       }
     }
   </script>
@@ -55,46 +126,54 @@
   <body>
 
     <!-- navigation bar -->
-    <nav>
-      <div class="group-btn">
-        <a href="{% url 'rankings:results' group='SCIENCE' %}">Science</a>
-        <a href="{% url 'rankings:results' group='BUSINESS_STUDIES' %}">Commerce</a>
-        <a href="{% url 'rankings:results' group='HUMANITIES' %}">Arts</a>
+    <nav role="navigation" aria-label="Main navigation">
+      <div class="group-btn" role="group" aria-label="Subject groups">
+        <a href="{% url 'rankings:results' group='SCIENCE' %}" 
+            aria-label="Science Group Rankings"
+            {% if request.resolver_match.kwargs.group == 'SCIENCE' %}aria-current="page"{% endif %}>
+          Science
+        </a>
+        <a href="{% url 'rankings:results' group='BUSINESS_STUDIES' %}" 
+            aria-label="Commerce Group Rankings"
+            {% if request.resolver_match.kwargs.group == 'BUSINESS_STUDIES' %}aria-current="page"{% endif %}>
+          Commerce
+        </a>
+        <a href="{% url 'rankings:results' group='HUMANITIES' %}" 
+            aria-label="Arts Group Rankings"
+            {% if request.resolver_match.kwargs.group == 'HUMANITIES' %}aria-current="page"{% endif %}>
+          Arts
+        </a>
       </div>
+      
       <div class="search-btn">
-        <form method="get" action="{% url 'rankings:results_default' %}">
-          <input type="text" name="roll_no" placeholder="Search by roll number" required>
-          <button type="submit">Search</button>
+        <form method="get" action="{% url 'rankings:results_default' %}" role="search" aria-label="Search student results">
+          <input type="text" 
+                id="roll-search"
+                name="roll_no" 
+                placeholder="Search by roll number" 
+                aria-describedby="search-help"
+                required>
+          <button type="submit" aria-label="Search for student results">Search</button>
         </form>
         {% if error %}
-          <p>{{ error }}</p>
+          <p class="error-message" role="alert">{{ error }}</p>
         {% endif %}
       </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">{% block content %} {% endblock %}</main>
+    <main class="main-content" role="main">{% block content %} {% endblock %}</main>
 
     <!-- Footer -->
-    <footer>
+    <footer role="contentinfo">
       <div class="footer-content">
         <div class="contact-info">
           <h3>Contact</h3>
-          <p>
-            Email:<a href="mailto:work.nj3515@gmail.com" target="_blank"
-              >&nbsp;work.nj3515@gmail.com</a
-            >
-          </p>
-          <p>
-            Phone:<a href="tel:+801626181662" target="_blank"
-              >&nbsp;+801626181662</a
-            >
-          </p>
-          <p>
-            Github:<a href="https://github.com/NiruddeshJatra" target="_blank"
-              >&nbsp;NiruddeshJatra</a
-            >
-          </p>
+          <address>
+            <p>Email: <a href="mailto:work.nj3515@gmail.com">work.nj3515@gmail.com</a></p>
+            <p>Phone: <a href="tel:+8801626181662">+8801626181662</a></p>
+            <p>GitHub: <a href="https://github.com/NiruddeshJatra" target="_blank" rel="noopener">NiruddeshJatra</a></p>
+          </address>
         </div>
       </div>
     </footer>

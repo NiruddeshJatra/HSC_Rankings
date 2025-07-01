@@ -2,68 +2,151 @@
 {% load static %}
 
 {% block title %}
-  Board Exam Rankings - HSC
+  {% if group == 'SCIENCE' %}
+    HSC Science Group Result 2024 Bangladesh - Merit List & Rankings
+  {% elif group == 'BUSINESS_STUDIES' %}
+    HSC Commerce Group Result 2024 Bangladesh - Merit List & Rankings  
+  {% elif group == 'HUMANITIES' %}
+    HSC Arts Group Result 2024 Bangladesh - Merit List & Rankings
+  {% else %}
+    HSC Result 2024 Bangladesh - Board Exam Rankings All Groups
+  {% endif %}
 {% endblock %}
 
+{% block meta_description %}
+  {% if group == 'SCIENCE' %}
+    HSC Science Group Result 2024 Bangladesh - Check complete merit list, rankings, and individual results for Science students from all education boards.
+  {% elif group == 'BUSINESS_STUDIES' %}
+    HSC Commerce Group Result 2024 Bangladesh - Find merit list, rankings, and individual results for Business Studies students from all boards.
+  {% elif group == 'HUMANITIES' %}
+    HSC Arts Group Result 2024 Bangladesh - View complete merit list, rankings, and individual results for Humanities students from all education boards.
+  {% else %}
+    HSC Result 2024 Bangladesh - Complete board exam results, merit lists, and rankings for Science, Commerce, Arts groups from all education boards.
+  {% endif %}
+{% endblock %}
+
+{% block canonical_url %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/{{ group|lower }}/{% endblock %}
+
+{% block og_title %}
+  {% if group == 'SCIENCE' %}
+    HSC Science Group Result 2024 Bangladesh - Merit List
+  {% elif group == 'BUSINESS_STUDIES' %}
+    HSC Commerce Group Result 2024 Bangladesh - Merit List
+  {% elif group == 'HUMANITIES' %}
+    HSC Arts Group Result 2024 Bangladesh - Merit List
+  {% else %}
+    HSC Result 2024 Bangladesh - All Groups Merit List
+  {% endif %}
+{% endblock %}
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/home.css' %}">
+<link rel="stylesheet" href="{% static 'css/home.css' %}" />
 
-  <div class="results-container">
-    <h1>{{ group|lower|title }} Student Ranks</h1>
+<!-- Schema markup for Dataset -->
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Dataset",
+    "name": "HSC {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Commerce{% elif group == 'HUMANITIES' %}Arts{% else %}All Groups{% endif %} Result 2024 Bangladesh",
+    "description": "Complete HSC board exam results and merit list for {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Commerce{% elif group == 'HUMANITIES' %}Arts{% else %}all{% endif %} group students in Bangladesh",
+    "url": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/{{ group|lower }}/",
+    "keywords": [
+      "HSC result",
+      "Bangladesh",
+      "{% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Commerce{% elif group == 'HUMANITIES' %}Arts{% else %}all groups{% endif %}",
+      "merit list",
+      "board exam",
+      "rankings"
+    ],
+    "creator": {
+      "@type": "Organization",
+      "name": "HSC Rankings Bangladesh"
+    },
+    "datePublished": "2024-07-01",
+    "dateModified": "2024-07-01",
+    "license": "https://creativecommons.org/licenses/by/4.0/"
+  }
+</script>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Roll Number</th>
-          <th>Name</th>
-          <th>Total Marks</th>
-          <th>GPA</th>
-          <th>Institute</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for student in students %}
-          <tr>
-            <td>{{ student.rank }}</td>
-            <td class="individual-link"><a href="{% url 'rankings:individual' roll_no=student.roll_no %}">{{ student.roll_no }}</a></td>
-            <td class="individual-link"><a href="{% url 'rankings:individual' roll_no=student.roll_no %}">{{ student.name }}</a></td>
-            <td>{{ student.marks.total_marks }}</td>
-            <td>{{ student.gpa }}</td>
-            <td>{{ student.institute }}</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+<div class="results-container">
+  <h1>{{ group|lower|title }} Student Ranks</h1>
 
-  <!-- Pagination for more results -->
-  <div class="pagination">
-    <span class="step-links">
-      {% if students.has_previous %}
-        <a href="?page=1">&laquo; first</a>
-        <a href="?page={{ students.previous_page_number }}">previous</a>
-      {% endif %}
-
-      <span class="current">
-        Page {{ students.number }} of {{ students.paginator.num_pages }}.
-      </span>
-
-      <span class="page-numbers">
-        {% for i in page_range %}
-          {% if i == students.number %}
-            <strong>{{ i }}</strong>
-          {% else %}
-            <a href="?page={{ i }}">{{ i }}</a>
-          {% endif %}
+  <table role="table" aria-label="HSC Results Merit List">
+    <thead>
+      <tr>
+        <th scope="col">Merit Position</th>
+        <th scope="col">Roll Number</th>
+        <th scope="col">Student Name</th>
+        <th scope="col">Total Marks</th>
+        <th scope="col">GPA</th>
+        <th scope="col">Institution</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for student in students %}
+      <tr itemscope itemtype="https://schema.org/Person">
+        <td><strong>{{ student.rank }}</strong></td>
+        <td class="individual-link">
+          <a
+            href="{% url 'rankings:individual' roll_no=student.roll_no %}"
+            aria-label="View {{ student.name }}'s detailed results"
+            itemprop="identifier"
+          >
+            {{ student.roll_no }}
+          </a>
+        </td>
+        <td class="individual-link">
+          <a
+            href="{% url 'rankings:individual' roll_no=student.roll_no %}"
+            aria-label="View {{ student.name }}'s detailed results"
+            itemprop="name"
+            class="student-name"
+            role="link"
+          >
+            {{ student.name }}
+          </a>
+        </td>
+        <td itemprop="award">{{ student.marks.total_marks }}</td>
+        <td><strong itemprop="award">{{ student.gpa }}</strong></td>
+        <td itemprop="affiliation">{{ student.institute }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="no-results">
+          <p>No results found. Please try a different search term.</p>
+        </td>
+      </tr>
       {% endfor %}
-      </span>
+    </tbody>
+  </table>
+</div>
 
-      {% if students.has_next %}
-        <a href="?page={{ students.next_page_number }}">next</a>
-        <a href="?page={{ students.paginator.num_pages }}">last &raquo;</a>
-      {% endif %}
+<!-- Pagination for more results -->
+<div aria-label="Results pagination" class="pagination">
+  <span class="step-links">
+    {% if students.has_previous %}
+      <a href="?page=1" aria-label="Go to first page">&laquo; First</a>
+      <a href="?page={{ students.previous_page_number }}" aria-label="Go to previous page">Previous</a>
+    {% endif %}
+
+    <span class="current" aria-current="page">
+      Page {{ students.number }} of {{ students.paginator.num_pages }}
     </span>
+
+    <span class="page-numbers" role="group" aria-label="Page numbers">
+      {% for i in page_range %}
+        {% if i == students.number %}
+        <span class="current-page-number" aria-current="page"><strong>{{ i }}</strong></span>
+        {% else %}
+          <a href="?page={{ i }} aria-label="Go to page {{ i }}">{{ i }}</a>
+        {% endif %}
+      {% endfor %}
+    </span>
+
+    {% if students.has_next %}
+      <a href="?page={{ students.next_page_number }}" aria-label="Go to next page">Next</a>
+      <a href="?page={{ students.paginator.num_pages }}" aria-label="Go to last page">Last &raquo;</a>
+    {% endif %}
+  </div>
 </div>
 
 {% endblock %}
