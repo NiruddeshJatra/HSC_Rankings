@@ -4,13 +4,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import InvalidSessionIdException, WebDriverException
+from selenium.common.exceptions import WebDriverException
 from bs4 import BeautifulSoup
 from Rankings.models import StudentInfo, Marks
-from django.db import IntegrityError
-from concurrent.futures import ThreadPoolExecutor
 import os
-import time
 
 # Set up Chrome options for headless mode and performance
 chrome_options = Options()

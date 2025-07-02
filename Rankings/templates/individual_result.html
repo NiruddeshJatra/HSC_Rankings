@@ -5,8 +5,56 @@
   {{ student.name }}'s Details - HSC Result
 {% endblock %}
 
+{% block meta_description %}
+  HSC Result for {{ student.name }} (Roll: {{ student.roll_no }}) - View detailed marks, GPA, rank, and institution for {{ student.name }} from {{ student.board }} board, group: {{ student.group }}.
+{% endblock %}
+
+{% block canonical_url %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/individual/{{ student.roll_no }}/{% endblock %}
+
+{% block og_title %}
+  {{ student.name }}'s HSC Result - {{ student.group|title }} Group
+{% endblock %}
+
+{% block og_description %}
+  See {{ student.name }}'s HSC result, marks, GPA, rank, and institution. Bangladesh HSC {{ student.group|title }} group detailed result for {{ student.session }}.
+{% endblock %}
+
+{% block twitter_title %}
+  {{ student.name }}'s HSC Result - {{ student.group|title }} Group
+{% endblock %}
+
+{% block twitter_description %}
+  HSC Result for {{ student.name }} (Roll: {{ student.roll_no }}) - GPA: {{ student.gpa }}, Rank: {{ student.rank }}, Board: {{ student.board }}, Group: {{ student.group }}.
+{% endblock %}
+
 {% block content %}
   <link rel="stylesheet" href="{% static 'css/individual_result.css' %}">
+
+  <!-- Schema markup for Person (Student) -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "{{ student.name }}",
+      "identifier": "{{ student.roll_no }}",
+      "alumniOf": {
+        "@type": "EducationalOrganization",
+        "name": "{{ student.institute }}"
+      },
+      "memberOf": {
+        "@type": "EducationalOrganization",
+        "name": "{{ student.board }} Board"
+      },
+      "description": "HSC Result for {{ student.name }} (Roll: {{ student.roll_no }}) in {{ student.group|title }} group, GPA: {{ student.gpa }}, Rank: {{ student.rank }}, Board: {{ student.board }}.",
+      "url": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/individual/{{ student.roll_no }}/",
+      "award": "GPA {{ student.gpa }}",
+      "additionalName": "Reg: {{ student.reg_no }}",
+      "parent": [
+        { "@type": "Person", "name": "{{ student.father_name }}" },
+        { "@type": "Person", "name": "{{ student.mother_name }}" }
+      ]
+    }
+  </script>
 
   <div class="student-container">
     <div class="student-info">
