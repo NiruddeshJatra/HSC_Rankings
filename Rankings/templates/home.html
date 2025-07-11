@@ -51,12 +51,22 @@
 <style>
 
 .homepage-choice-container {
-  min-height: 90vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+  padding: 24px 8px;
+}
+.homepage-choice-container h1 {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+.homepage-choice-container p {
+  font-size: 1.15rem;
+  margin-bottom: 28px;
 }
 .exam-choice-buttons {
   display: flex;
@@ -72,16 +82,56 @@
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
   text-decoration: none;
   color: #3a3131;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   border: 2px solid transparent;
   cursor: pointer;
   transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  min-width: 200px;
+  letter-spacing: 0.02em;
 }
 .exam-btn:hover, .exam-btn:focus {
   box-shadow: 0 4px 24px rgba(0,0,0,0.16);
   transform: translateY(-4px) scale(1.04);
   outline: none;
+}
+
+@media (max-width: 700px) {
+  .exam-choice-buttons {
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    align-items: center;
+  }
+  .exam-btn {
+    width: 100%;
+    max-width: 320px;
+    font-size: 1.15rem;
+    padding: 22px 0;
+  }
+  .homepage-choice-container {
+    padding: 16px 2vw;
+  }
+  .homepage-choice-container h1 {
+    font-size: 1.4rem;
+  }
+  .homepage-choice-container p {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .exam-btn {
+    font-size: 0.8rem;
+    padding: 16px 0;
+    min-width: 120px;
+  }
+  .homepage-choice-container h1 {
+    font-size: 1.1rem;
+  }
+  .homepage-choice-container p {
+    font-size: 0.95rem;
+  }
 }
 </style>
 {% endblock %} 
