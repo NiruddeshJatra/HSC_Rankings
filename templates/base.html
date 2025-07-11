@@ -124,29 +124,29 @@
   </script>
   
   <body>
-
+    {% if not request.resolver_match or request.resolver_match.url_name != 'home' %}
     <!-- navigation bar -->
     <nav role="navigation" aria-label="Main navigation">
       <div class="group-btn" role="group" aria-label="Subject groups">
-        <a href="{% url 'rankings:results' group='SCIENCE' %}" 
+        <a href="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group='science' %}" 
             aria-label="Science Group Rankings"
-            {% if request.resolver_match.kwargs.group == 'SCIENCE' %}aria-current="page"{% endif %}>
+            {% if request.resolver_match.kwargs.group|lower == 'science' and request.resolver_match.kwargs.exam_type|lower == 'hsc' %}aria-current="page"{% endif %}>
           Science
         </a>
-        <a href="{% url 'rankings:results' group='BUSINESS_STUDIES' %}" 
+        <a href="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group='business_studies' %}" 
             aria-label="Commerce Group Rankings"
-            {% if request.resolver_match.kwargs.group == 'BUSINESS_STUDIES' %}aria-current="page"{% endif %}>
+            {% if request.resolver_match.kwargs.group|lower == 'business_studies' and request.resolver_match.kwargs.exam_type|lower == 'hsc' %}aria-current="page"{% endif %}>
           Commerce
         </a>
-        <a href="{% url 'rankings:results' group='HUMANITIES' %}" 
+        <a href="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group='humanities' %}" 
             aria-label="Arts Group Rankings"
-            {% if request.resolver_match.kwargs.group == 'HUMANITIES' %}aria-current="page"{% endif %}>
+            {% if request.resolver_match.kwargs.group|lower == 'humanities' and request.resolver_match.kwargs.exam_type|lower == 'hsc' %}aria-current="page"{% endif %}>
           Arts
         </a>
       </div>
       
       <div class="search-btn">
-        <form method="get" action="{% url 'rankings:results_default' %}" role="search" aria-label="Search student results">
+        <form method="get" action="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group=group|default:'science' %}" role="search" aria-label="Search student results">
           <input type="text" 
                 id="roll-search"
                 name="roll_no" 
@@ -160,23 +160,26 @@
         {% endif %}
       </div>
     </nav>
+    {% endif %}
 
     <!-- Main Content -->
     <main class="main-content" role="main">{% block content %} {% endblock %}</main>
 
+    {% if not request.resolver_match or request.resolver_match.url_name != 'home' %}
     <!-- Footer -->
     <footer role="contentinfo">
       <div class="footer-content">
         <div class="contact-info">
           <h3>Contact</h3>
           <address>
-            <p>Email: <a href="mailto:work.nj3515@gmail.com">work.nj3515@gmail.com</a></p>
+            <p>Email: <a href="mailto:nasifulalam1212@gmail.com">nasifulalam1212@gmail.com</a></p>
             <p>Phone: <a href="tel:+8801626181662">+8801626181662</a></p>
             <p>GitHub: <a href="https://github.com/NiruddeshJatra" target="_blank" rel="noopener">NiruddeshJatra</a></p>
           </address>
         </div>
       </div>
     </footer>
+    {% endif %}
   </body>
   <script>
     window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };

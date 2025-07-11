@@ -1,36 +1,43 @@
-from django.core.paginator import Paginator
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from .models import StudentInfo, Marks
+from django.core.paginator import Paginator
 
-def results(request, group="SCIENCE"):
-  group = group.replace("_", " ")
-  if roll_no := request.GET.get('roll_no'):
-    return redirect('rankings:individual', roll_no=roll_no)
+def home(request):
+    return render(request, 'home.html')
 
-  students = StudentInfo.objects.filter(group=group).order_by('rank')
+def results(request, exam_type, group):
+    exam_type = exam_type.lower()
+    group = group.lower()
+    if request.GET.get('roll_no'):
+        roll_no = request.GET['roll_no']
+        from django.urls import reverse
+        from django.shortcuts import redirect
+        return redirect(reverse('rankings:individual', kwargs={'exam_type': exam_type, 'roll_no': roll_no}))
+    # Map group to DB value if needed (e.g., 'science' -> 'SCIENCE')
+    group_db = group.upper()
+    if group_db == 'BUSINESS_STUDIES':
+        group_db = 'BUSINESS STUDIES'
+    students = StudentInfo.objects.filter(exam_type=exam_type.upper(), group=group_db).order_by('rank').select_related('marks')
+    paginator = Paginator(students, 50)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    page_range = paginator.get_elided_page_range(number=page_obj.number, on_each_side=2, on_ends=1)
+    context = {
+        'students': page_obj,
+        'group': group_db,
+        'exam_type': exam_type,  # Keep lowercase for URLs
+        'page_range': page_range,
+    }
+    return render(request, 'results.html', context)
 
-  # Pagination
-  paginator = Paginator(students, 50)
-  page_number = request.GET.get('page')
-  page_obj = paginator.get_page(page_number)
-
-  current_page = page_obj.number
-  total_pages = paginator.num_pages
-
-  # Logic for displaying more flexible pagination (1,2,3...50,51 etc.)
-  if current_page <= 3:
-    page_range = range(1, min(total_pages, 6))
-  elif current_page >= total_pages - 2:
-    page_range = range(max(1, total_pages - 2), total_pages + 1)
-  else:
-    page_range = range(current_page - 2, current_page + 3)
-
-  return render(request, 'results.html', {'students': page_obj, 'group': group, 'page_range': page_range})
-
-
-def individual_result(request, roll_no):
-  student = get_object_or_404(StudentInfo, roll_no=roll_no)
-  marks = get_object_or_404(Marks, student=student)
-
-  return render(request, 'individual_result.html', {'student': student, 'marks': marks})
+def individual_result(request, exam_type, roll_no):
+    exam_type = exam_type.lower()
+    student = get_object_or_404(StudentInfo, roll_no=roll_no, exam_type=exam_type.upper())
+    marks = get_object_or_404(Marks, student=student)
+    context = {
+        'student': student,
+        'marks': marks,
+        'exam_type': exam_type,  # Keep lowercase for URLs
+    }
+    return render(request, 'individual_result.html', context)
 

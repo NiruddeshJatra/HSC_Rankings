@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Bangladesh Board Exam Results - HSC & SSC Rankings{% endblock %}
+
+{% block meta_description %}Check Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards. Compare HSC 2024 and SSC 2025 results online.{% endblock %}
+
+{% block canonical_url %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/{% endblock %}
+
+{% block og_title %}Bangladesh Board Exam Results - HSC & SSC Rankings{% endblock %}
+{% block og_description %}Check Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards. Compare HSC 2024 and SSC 2025 results online.{% endblock %}
+{% block og_image %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/static/images/home.png{% endblock %}
+
+{% block twitter_title %}Bangladesh Board Exam Results - HSC & SSC Rankings{% endblock %}
+{% block twitter_description %}Check Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards. Compare HSC 2024 and SSC 2025 results online.{% endblock %}
+{% block twitter_image %}https://hsc-rankings-niruddesh-jatras-projects.vercel.app/static/images/home.png{% endblock %}
+
+{% block content %}
+<div class="homepage-choice-container">
+  <h1>Welcome to Bangladesh Board Exam Rankings</h1>
+  <p>Please select which exam results you want to view:</p>
+  <div class="exam-choice-buttons">
+    <form action="/hsc/science/" method="get" style="display:inline;">
+      <button type="submit" class="exam-btn hsc-btn" aria-label="View HSC 2024 Results">
+        HSC 2024 Results
+      </button>
+    </form>
+    <form action="/ssc/science/" method="get" style="display:inline;">
+      <button type="submit" class="exam-btn ssc-btn" aria-label="View SSC 2025 Results">
+        SSC 2025 Results
+      </button>
+    </form>
+  </div>
+</div>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Bangladesh Board Exam Rankings",
+  "url": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/",
+  "logo": "https://hsc-rankings-niruddesh-jatras-projects.vercel.app/static/images/home.png",
+  "sameAs": [
+    "https://www.facebook.com/",
+    "https://x.com/",
+    "https://instagram.com/",
+    "https://telegram.me/"
+  ],
+  "description": "Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards."
+}
+</script>
+<style>
+
+.homepage-choice-container {
+  min-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.exam-choice-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  margin-top: 40px;
+}
+.exam-btn {
+  display: inline-block;
+  padding: 32px 40px;
+  border-radius: 16px;
+  background: #ffeeee;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  text-decoration: none;
+  color: #3a3131;
+  font-size: 1.3rem;
+  font-weight: 600;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+}
+.exam-btn:hover, .exam-btn:focus {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.16);
+  transform: translateY(-4px) scale(1.04);
+  outline: none;
+}
+</style>
+{% endblock %} 
