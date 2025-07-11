@@ -95,7 +95,7 @@
   {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    "name": "{{ exam_type|default:'HSC' }} {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}All Groups{% endif %} Result {{ exam_type == 'SSC'|yesno:'2025,2024' }} Bangladesh",
+    "name": "{{ exam_type|default:'HSC' }} {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}All Groups{% endif %} Result {% if exam_type == 'SSC' %}2025{% else %}2024{% endif %} Bangladesh",
     "description": "Complete {{ exam_type|default:'HSC' }} board exam results and merit list for {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}all{% endif %} group students in Bangladesh",
     "url": "https://boardexamrankings.vercel.app/results/",
     "keywords": [
@@ -110,8 +110,8 @@
       "@type": "Organization",
       "name": "HSC Rankings Bangladesh"
     },
-    "datePublished": "{{ exam_type == 'SSC'|yesno:'2025-07-01,2024-07-01' }}",
-    "dateModified": "{{ exam_type == 'SSC'|yesno:'2025-07-01,2024-07-01' }}",
+    "datePublished": "{% if exam_type == 'SSC' %}2025-07-01{% else %}2024-07-01{% endif %}",
+    "dateModified": "{% if exam_type == 'SSC' %}2025-07-01{% else %}2024-07-01{% endif %}",
     "license": "https://creativecommons.org/licenses/by/4.0/"
   }
 </script>
