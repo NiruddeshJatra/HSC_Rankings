@@ -76,15 +76,15 @@
 {% endblock %}
 
 {% block og_description %}
-  {% block meta_description %}{% endblock %}
+  {{ block.super }}
 {% endblock %}
 
 {% block twitter_title %}
-  {% block og_title %}{% endblock %}
+  {{ block.super }}
 {% endblock %}
 
 {% block twitter_description %}
-  {% block meta_description %}{% endblock %}
+  {{ block.super }}
 {% endblock %}
 
 {% block content %}
@@ -117,7 +117,7 @@
 </script>
 
 <div class="results-container">
-  <h1>{{ exam_type|default:'HSC' }} {{ group|lower|title }} Student Ranks</h1>
+  <h1>{{ exam_type|default:'HSC' }} {{ group_db|default:group|lower|title }} Student Ranks</h1>
 
   <table role="table" aria-label="{{ exam_type|default:'HSC' }} Results Merit List">
     <thead>
@@ -154,9 +154,9 @@
             {{ student.name }}
           </a>
         </td>
-        <td itemprop="award">{{ student.marks.total_marks }}</td>
-        <td><strong itemprop="award">{{ student.gpa }}</strong></td>
-        <td itemprop="affiliation">{{ student.institute }}</td>
+        <td itemprop="award">{{ student.marks.total_marks|default:'N/A' }}</td>
+        <td><strong itemprop="award">{{ student.gpa|default:'N/A' }}</strong></td>
+        <td itemprop="affiliation">{{ student.institute|default:'N/A' }}</td>
       </tr>
       {% empty %}
       <tr>
