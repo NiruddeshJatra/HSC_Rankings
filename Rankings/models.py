@@ -38,6 +38,9 @@ class Marks(models.Model):
   higher_math = models.IntegerField(null=True, blank=True, default=0)  # 126 (SSC)
   ict = models.IntegerField(null=True, blank=True, default=0)  # 154 (SSC: Information & Technology)
   islam_moral = models.IntegerField(null=True, blank=True, default=0)  # 111 (Islam & Moral Education)
+  hindu_moral = models.IntegerField(null=True, blank=True, default=0)  # 112 (Hindu Religion & Moral Education)
+  buddha_moral = models.IntegerField(null=True, blank=True, default=0)  # 113 (Buddha Religion & Moral Education)
+  christian_moral = models.IntegerField(null=True, blank=True, default=0)  # 114 (Christian Religion & Moral Education)
   bangladesh_world = models.IntegerField(null=True, blank=True, default=0)  # 150 (Bangladesh & World)
   agriculture = models.IntegerField(null=True, blank=True, default=0)  # 134 (Agriculture Studies)
   home_science = models.IntegerField(null=True, blank=True, default=0)  # 151

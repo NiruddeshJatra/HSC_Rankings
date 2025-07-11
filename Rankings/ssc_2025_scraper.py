@@ -22,6 +22,9 @@ SSC_SUBJECT_CODE_MAP = {
     '126': 'higher_math',
     '154': 'ict',
     '111': 'islam_moral',
+    '112': 'hindu_moral',
+    '113': 'buddha_moral',
+    '114': 'christian_moral',
     '150': 'bangladesh_world',
     '134': 'agriculture',
     '151': 'home_science',
@@ -102,26 +105,29 @@ def fetch_and_save_ssc_result(roll_number, max_retries=5):
                     field = SSC_SUBJECT_CODE_MAP.get(code)
                     if field:
                         marks_data[field] = mark
-                total_marks = sum(marks_data.values())
-
-                # Save to database
-                student_info, created = StudentInfo.objects.get_or_create(
-                    roll_no=roll_no,
-                    exam_type='SSC',
-            defaults={
-                'name': name,
-                'board': board,
-                'father_name': father_name,
-                'group': group,
-                'mother_name': mother_name,
-                'session': session,
-                'reg_no': reg_no,
-                'type_of_result': type_of_result,
-                'institute': institute,
-                'result': result,
-                'gpa': gpa
-            }
-        )
+            # Calculate total marks after all subjects are processed
+            total_marks = sum(marks_data.values())
+            # Debug print for problematic student
+            if roll_no == '114143':
+                print(f"DEBUG: Roll {roll_no}, marks_data: {marks_data}, total_marks: {total_marks}")
+            # Save to database
+            student_info, created = StudentInfo.objects.get_or_create(
+                roll_no=roll_no,
+                exam_type='SSC',
+                defaults={
+                    'name': name,
+                    'board': board,
+                    'father_name': father_name,
+                    'group': group,
+                    'mother_name': mother_name,
+                    'session': session,
+                    'reg_no': reg_no,
+                    'type_of_result': type_of_result,
+                    'institute': institute,
+                    'result': result,
+                    'gpa': gpa
+                }
+            )
             Marks.objects.update_or_create(
                 student=student_info,
                 defaults={
@@ -144,16 +150,16 @@ def fetch_and_save_ssc_result(roll_number, max_retries=5):
 
 # List of roll numbers to scrape (SSC 2025, test with 100 rolls)
 # Read roll numbers from failed_rolls.txt
-try:
-    with open("failed_rolls.txt", "r") as f:
-        roll_numbers = [int(line.strip()) for line in f if line.strip()]
-    print(f"Loaded {len(roll_numbers)} roll numbers from failed_rolls.txt")
-except FileNotFoundError:
-    print("failed_rolls.txt not found. Using empty list.")
-    roll_numbers = []
-except Exception as e:
-    print(f"Error reading failed_rolls.txt: {e}")
-    roll_numbers = []
+# try:
+#     with open("failed_rolls.txt", "r") as f:
+#         roll_numbers = [int(line.strip()) for line in f if line.strip()]
+#     print(f"Loaded {len(roll_numbers)} roll numbers from failed_rolls.txt")
+# except FileNotFoundError:
+#     print("failed_rolls.txt not found. Using empty list.")
+#     roll_numbers = []
+# except Exception as e:
+#     print(f"Error reading failed_rolls.txt: {e}")
+roll_numbers = [114143]
 
 failed_rolls = []
 max_workers = 3
