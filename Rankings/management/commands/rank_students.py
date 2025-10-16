@@ -2,11 +2,11 @@ from django.core.management.base import BaseCommand
 from Rankings.models import StudentInfo
 
 class Command(BaseCommand):
-    help = 'Rank SSC Science students based on total marks'
+    help = 'Rank HSC 2025 Science students based on total marks'
 
     def handle(self, *args, **kwargs):
         group = 'SCIENCE'
-        exam_type = 'SSC'
+        exam_type = 'HSC_2025'
         students = StudentInfo.objects.filter(group=group, exam_type=exam_type).order_by('-marks__total_marks')
         rank = 1
         for i, student in enumerate(students):
@@ -20,4 +20,4 @@ class Command(BaseCommand):
                 print(f'Ranked {student.roll_no} as rank {student.rank}')
             except Exception as e:
                 print(f'{student.roll_no} has no marks: {e}')
-        self.stdout.write(self.style.SUCCESS(f'Successfully ranked {rank-1} SSC {group} students.'))
+        self.stdout.write(self.style.SUCCESS(f'Successfully ranked {rank-1} HSC 2025 {group} students.'))
