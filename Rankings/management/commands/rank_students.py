@@ -5,7 +5,7 @@ class Command(BaseCommand):
     help = 'Rank HSC 2025 Science students based on total marks'
 
     def handle(self, *args, **kwargs):
-        group = 'SCIENCE'
+        group = 'BUSINESS STUDIES'
         exam_type = 'HSC_2025'
         students = StudentInfo.objects.filter(group=group, exam_type=exam_type).order_by('-marks__total_marks')
         rank = 1

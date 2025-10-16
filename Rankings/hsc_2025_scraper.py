@@ -250,10 +250,10 @@ def main():
             roll_numbers = [int(line.strip()) for line in f if line.strip()]
         print(f"Loaded {len(roll_numbers)} roll numbers from hsc_2025_rolls.txt")
     except FileNotFoundError:
-        # Example: Roll numbers for Chittagong Board HSC 2025
-        start_roll = 112781
-        end_roll = 121172  # Test with 10 rolls first
-        roll_numbers = [101642, 101895, 103433, 105710, 107824, 109638, 110686]
+        start_roll = 500001
+        end_roll = 528681
+        roll_numbers = [550001, 550002, 550003, 550004, 560001, 560002, 560003, 560004, 560005, 570001, 570002, 570003, 570003, 570004, 570005, 570006, 570007, 570008, 570009, 570010, 570011, 580001, 580002, 580003, 580004, 580005]
+        print(f"Using roll range: {start_roll} to {end_roll}")
     
     failed_rolls = []
     successful_count = 0
