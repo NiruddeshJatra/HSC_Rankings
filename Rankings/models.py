@@ -15,16 +15,31 @@ class StudentInfo(models.Model):
   result = models.CharField(max_length=100, null=True, blank=True)
   gpa = models.CharField(max_length=100, null=True, blank=True)
   rank = models.IntegerField(null=True, blank=True)
-  # Updated exam_type choices to include HSC 2025
   EXAM_TYPE_CHOICES = [
-    ('HSC', 'HSC'),  # This remains as HSC for existing data
-    ('SSC', 'SSC'),
-    ('HSC_2025', 'HSC 2025'),  # New for HSC 2025
+    ('HSC_2024', 'HSC 2024'),
+    ('SSC_2025', 'SSC 2025'),
+    ('HSC_2025', 'HSC 2025'),
   ]
-  exam_type = models.CharField(max_length=10, choices=EXAM_TYPE_CHOICES, default='HSC')
+  exam_type = models.CharField(max_length=10, choices=EXAM_TYPE_CHOICES, default='HSC_2024')
 
   class Meta:
     unique_together = ('roll_no', 'exam_type')
+    indexes = [
+      models.Index(fields=['exam_type', 'group', 'rank']),
+      models.Index(fields=['institute']),
+    ]
+
+
+class ExamSet(models.Model):
+  exam_type = models.CharField(max_length=10, unique=True)
+  label = models.CharField(max_length=50)
+  rankings_published = models.BooleanField(default=False)
+  scrape_complete = models.BooleanField(default=False)
+  last_ranked_at = models.DateTimeField(null=True, blank=True)
+  notes = models.CharField(max_length=255, blank=True)
+
+  def __str__(self):
+    return self.label
 
 
 class Marks(models.Model):
@@ -66,3 +81,8 @@ class Marks(models.Model):
   total_marks = models.IntegerField(default=0)
   physical_education = models.IntegerField(default=0, verbose_name='Physical Education, Health and Sports')
   career_education = models.IntegerField(default=0, verbose_name='Career Education')
+
+  class Meta:
+    indexes = [
+      models.Index(fields=['total_marks']),
+    ]

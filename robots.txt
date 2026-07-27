@@ -1,8 +1,0 @@
-# Allow all robots complete access
-User-agent: *
-Disallow: /admin/
-Disallow: /staticfiles/
-Disallow: /__pycache__/
-
-# Sitemap location
-Sitemap: https://boardexamrankings.vercel.app/static/sitemap.xml

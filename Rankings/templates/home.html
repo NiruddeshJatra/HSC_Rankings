@@ -1,56 +1,87 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Bangladesh Board Exam Results - HSC & SSC Rankings{% endblock %}
+{% block title %}Chittagong Board SSC & HSC Result Rankings{% endblock %}
 
-{% block meta_description %}Check Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards. Compare HSC 2024, 2025 and SSC 2025 results online.{% endblock %}
+{% block meta_description %}Chittagong Board (BISE-CTG) SSC and HSC result rankings - independently computed merit lists for Science, Commerce, and Arts groups, HSC 2024, HSC 2025, and SSC 2025.{% endblock %}
 
-{% block canonical_url %}https://boardexamrankings.vercel.app/{% endblock %}
+{% block og_title %}Chittagong Board SSC & HSC Result Rankings{% endblock %}
+{% block og_description %}Chittagong Board (BISE-CTG) SSC and HSC result rankings - independently computed merit lists for Science, Commerce, and Arts groups, HSC 2024, HSC 2025, and SSC 2025.{% endblock %}
 
-{% block og_title %}Bangladesh Board Exam Results - HSC & SSC Rankings{% endblock %}
-{% block og_description %}Check Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards. Compare HSC 2024, 2025 and SSC 2025 results online.{% endblock %}
-{% block og_image %}https://boardexamrankings.vercel.app/static/images/home.png{% endblock %}
-
-{% block twitter_title %}Bangladesh Board Exam Results - HSC & SSC Rankings{% endblock %}
-{% block twitter_description %}Check Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards. Compare HSC 2024, 2025 and SSC 2025 results online.{% endblock %}
-{% block twitter_image %}https://boardexamrankings.vercel.app/static/images/home.png{% endblock %}
+{% block twitter_title %}Chittagong Board SSC & HSC Result Rankings{% endblock %}
+{% block twitter_description %}Chittagong Board (BISE-CTG) SSC and HSC result rankings - independently computed merit lists for Science, Commerce, and Arts groups, HSC 2024, HSC 2025, and SSC 2025.{% endblock %}
 
 {% block content %}
 <div class="homepage-choice-container">
-  <h1>Welcome to Bangladesh Board Exam Rankings</h1>
+  <h1>Chittagong Board SSC &amp; HSC Result Rankings</h1>
   <p>Please select which exam results you want to view:</p>
   <div class="exam-choice-buttons">
-    <form action="/hsc/science/" method="get" style="display:inline;">
-      <button type="submit" class="exam-btn hsc-btn" aria-label="View HSC 2024 Results">
-        HSC 2024 Results
-      </button>
-    </form>
-    <form action="/ssc/science/" method="get" style="display:inline;">
-      <button type="submit" class="exam-btn ssc-btn" aria-label="View SSC 2025 Results">
-        SSC 2025 Results
-      </button>
-    </form>
-    <form action="/hsc_2025/science/" method="get" style="display:inline;">
-      <button type="submit" class="exam-btn hsc-btn" aria-label="View HSC 2025 Results">
-        HSC 2025 Results
-      </button>
-    </form>
+    <a href="{% url 'rankings:results' exam='hsc' year='2024' group='science' %}" class="exam-btn hsc-btn" aria-label="View HSC 2024 Results">
+      HSC 2024 Results
+    </a>
+    <a href="{% url 'rankings:results' exam='ssc' year='2025' group='science' %}" class="exam-btn ssc-btn" aria-label="View SSC 2025 Results">
+      SSC 2025 Results
+    </a>
+    <a href="{% url 'rankings:results' exam='hsc' year='2025' group='science' %}" class="exam-btn hsc-btn" aria-label="View HSC 2025 Results">
+      HSC 2025 Results
+    </a>
   </div>
 </div>
+
+<div class="homepage-info">
+  <p>
+    This site publishes Chittagong Board (BISE-CTG) SSC and HSC exam result rankings for
+    Bangladesh. It covers the Chittagong board only — it does not cover Dhaka or any other
+    education board. Results are collected from the board's public result portal, and the
+    board's own published result is always authoritative if there is ever a discrepancy.
+  </p>
+  <p>
+    The education boards themselves do not publish merit positions. The ranks shown here are
+    computed independently by this site, from each student's total marks across all subjects,
+    for every group: Science, Commerce (Business Studies), and Arts (Humanities). Students who
+    score the same total marks share the same rank. Because ranks are computed only from roll
+    numbers that were successfully retrieved from the board's portal, coverage for any given
+    exam set may be incomplete. See the <a href="{% url 'rankings:methodology' %}">Methodology</a>
+    page for full details on how this works, what data is stored, and how to request removal of
+    your information.
+  </p>
+  <p>
+    Three exam sets are currently available: HSC 2024, HSC 2025, and SSC 2025. Each is broken
+    down into three group rankings. Use the links below to jump directly to any group and exam
+    set, or search by roll number from any results page once you're viewing a group.
+  </p>
+
+  <h2>All rankings</h2>
+  <ul>
+    <li>
+      HSC 2024:
+      <a href="{% url 'rankings:results' exam='hsc' year='2024' group='science' %}">Science</a>,
+      <a href="{% url 'rankings:results' exam='hsc' year='2024' group='business_studies' %}">Commerce</a>,
+      <a href="{% url 'rankings:results' exam='hsc' year='2024' group='humanities' %}">Arts</a>
+    </li>
+    <li>
+      HSC 2025:
+      <a href="{% url 'rankings:results' exam='hsc' year='2025' group='science' %}">Science</a>,
+      <a href="{% url 'rankings:results' exam='hsc' year='2025' group='business_studies' %}">Commerce</a>,
+      <a href="{% url 'rankings:results' exam='hsc' year='2025' group='humanities' %}">Arts</a>
+    </li>
+    <li>
+      SSC 2025:
+      <a href="{% url 'rankings:results' exam='ssc' year='2025' group='science' %}">Science</a>,
+      <a href="{% url 'rankings:results' exam='ssc' year='2025' group='business_studies' %}">Commerce</a>,
+      <a href="{% url 'rankings:results' exam='ssc' year='2025' group='humanities' %}">Arts</a>
+    </li>
+  </ul>
+</div>
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Bangladesh Board Exam Rankings",
-  "url": "https://boardexamrankings.vercel.app/",
-  "logo": "https://boardexamrankings.vercel.app/static/images/home.png",
-  "sameAs": [
-    "https://www.facebook.com/",
-    "https://x.com/",
-    "https://instagram.com/",
-    "https://telegram.me/"
-  ],
-  "description": "Bangladesh HSC and SSC board exam results, merit lists, and student rankings for all groups and boards."
+  "url": "{{ request.scheme }}://{{ request.get_host }}/",
+  "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'screenshots/home.png' %}",
+  "description": "Chittagong board SSC and HSC exam results, merit lists, and student rankings, independently computed from total marks."
 }
 </script>
 <style>
@@ -139,4 +170,4 @@
   }
 }
 </style>
-{% endblock %} 
+{% endblock %}

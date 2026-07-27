@@ -3,83 +3,39 @@
 {% load marks_extras %}
 
 {% block title %}
-  {{ student.name }}'s Details - {{ exam_type|default:'HSC' }} Result
+  {{ student.name }}'s Details - {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Result
 {% endblock %}
 
 {% block meta_description %}
-  {{ exam_type|default:'HSC' }} Result for {{ student.name }} (Roll: {{ student.roll_no }}) - View detailed marks, GPA, rank, and institution for {{ student.name }} from {{ student.board }} board, group: {{ student.group }}.
+  {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Result for {{ student.name }} (Roll: {{ student.roll_no }}) - View detailed marks, GPA, rank, and institution for {{ student.name }} from {{ student.board }} board, group: {{ student.group }}.
 {% endblock %}
 
-{% block canonical_url %}https://boardexamrankings.vercel.app/individual/{{ student.roll_no }}/{% endblock %}
-
 {% block og_title %}
-  {{ student.name }}'s {{ exam_type|default:'HSC' }} Result - {{ student.group|title }} Group
+  {{ student.name }}'s {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Result - {{ student.group|title }} Group
 {% endblock %}
 
 {% block og_description %}
-  See {{ student.name }}'s {{ exam_type|default:'HSC' }} result, marks, GPA, rank, and institution. Bangladesh {{ exam_type|default:'HSC' }} {{ student.group|title }} group detailed result for {{ student.session }}.
-{% endblock %}
-
-{% block og_image %}
-  {% if student.photo_url %}
-    {{ student.photo_url }}
-  {% else %}
-    https://boardexamrankings.vercel.app/static/images/default_student.png
-  {% endif %}
+  See {{ student.name }}'s {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} result, marks, GPA, rank, and institution. Bangladesh {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} {{ student.group|title }} group detailed result for {{ student.session }}.
 {% endblock %}
 
 {% block twitter_title %}
-  {{ student.name }}'s {{ exam_type|default:'HSC' }} Result - {{ student.group|title }} Group
+  {{ student.name }}'s {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Result - {{ student.group|title }} Group
 {% endblock %}
 
 {% block twitter_description %}
-  {{ exam_type|default:'HSC' }} Result for {{ student.name }} (Roll: {{ student.roll_no }}) - GPA: {{ student.gpa }}, Rank: {{ student.rank }}, Board: {{ student.board }}, Group: {{ student.group }}.
+  {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Result for {{ student.name }} (Roll: {{ student.roll_no }}) - GPA: {{ student.gpa }}, Rank: {{ student.rank }}, Board: {{ student.board }}, Group: {{ student.group }}.
 {% endblock %}
 
-{% block twitter_image %}
-  {% if student.photo_url %}
-    {{ student.photo_url }}
-  {% else %}
-    https://boardexamrankings.vercel.app/static/images/default_student.png
-  {% endif %}
-{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
 
 {% block content %}
   <link rel="stylesheet" href="{% static 'css/individual_result.css' %}">
-
-  <!-- Schema markup for Person (Student) -->
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "name": "{{ student.name }}",
-      "identifier": "{{ student.roll_no }}",
-      "alumniOf": {
-        "@type": "EducationalOrganization",
-        "name": "{{ student.institute }}"
-      },
-      "memberOf": {
-        "@type": "EducationalOrganization",
-        "name": "{{ student.board }} Board"
-      },
-      "description": "{{ exam_type|default:'HSC' }} Result for {{ student.name }} (Roll: {{ student.roll_no }}) in {{ student.group|title }} group, GPA: {{ student.gpa }}, Rank: {{ student.rank }}, Board: {{ student.board }}.",
-      "url": "https://boardexamrankings.vercel.app/individual/{{ student.roll_no }}/",
-      "award": "GPA {{ student.gpa }}",
-      "additionalName": "Reg: {{ student.reg_no }}",
-      "parent": [
-        { "@type": "Person", "name": "{{ student.father_name }}" },
-        { "@type": "Person", "name": "{{ student.mother_name }}" }
-      ],
-      "hasCredential": "{{ exam_type|default:'HSC' }}"
-    }
-  </script>
 
   <div class="student-container">
     <div class="student-info">
       <h1>Student Information</h1>
       <p><strong>Name:</strong>  {{ student.name }}</p>
       <p><strong>Roll Number:</strong> {{ student.roll_no }}</p>
-      <p><strong>Registration Number:</strong> {{ student.reg_no }}</p>
       <p><strong>Group:</strong> {{ student.group }}</p>
       <p><strong>Rank:</strong> {{ student.rank }}</p>
       <p><strong>Board:</strong> {{ student.board }}</p>
@@ -87,8 +43,6 @@
       <p><strong>Type of Result:</strong> {{ student.type_of_result }}</p>
       <p><strong>Result:</strong> {{ student.result }}</p>
       <p><strong>GPA:</strong> {{ student.gpa }}</p>
-      <p><strong>Father's Name:</strong> {{ student.father_name }}</p>
-      <p><strong>Mother's Name:</strong> {{ student.mother_name }}</p>
       <p><strong>Institute:</strong> {{ student.institute }}</p>
     </div>
 
@@ -120,7 +74,7 @@
   <div class="share-buttons">
     <p style="font-size: 0.8rem;">Share this result:</p>
     <!-- X -->
-    <a href="https://x.com/share?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20{{ exam_type|default:'HSC' }}%20results!" target="_blank">
+    <a href="https://x.com/share?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!" target="_blank">
       <img src="{% static 'images/twitter.png' %}" alt="Share on X (Twitter)"  style="width: 24px; height: 24px; margin: 0 8px;"/>
     </a>
     <!-- Facebook -->
@@ -128,7 +82,7 @@
       <img src="{% static 'images/facebook.png' %}" alt="Share on Facebook" style="width: 24px; height: 24px; margin: 0 8px;"/>
     </a>
     <!-- WhatsApp -->
-    <a href="https://api.whatsapp.com/send?text=Check%20out%20{{ student.name }}'s%20{{ exam_type|default:'HSC' }}%20results!%20{{ request.build_absolute_uri }}" target="_blank">
+    <a href="https://api.whatsapp.com/send?text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!%20{{ request.build_absolute_uri }}" target="_blank">
       <img src="{% static 'images/whatsapp.png' %}" alt="Share on WhatsApp" style="width: 24px; height: 24px; margin: 0 8px;"/>
     </a>
     <!-- Instagram -->
@@ -136,7 +90,7 @@
       <img src="{% static 'images/instagram.png' %}" alt="Share on Instagram" style="width: 24px; height: 24px; margin: 0 8px;"/>
     </a>
     <!-- Telegram -->
-    <a href="https://telegram.me/share/url?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20{{ exam_type|default:'HSC' }}%20results!" target="_blank">
+    <a href="https://telegram.me/share/url?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!" target="_blank">
       <img src="{% static 'images/telegram.png' %}" alt="Share on Telegram" style="width: 24px; height: 24px; margin: 0 8px;"/>
     </a>
   </div>

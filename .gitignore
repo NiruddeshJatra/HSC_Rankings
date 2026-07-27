@@ -1,2 +1,4 @@
 hsc_rankings_venv/
 data.yaml
+.env
+db.sqlite3

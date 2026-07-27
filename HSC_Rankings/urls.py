@@ -14,14 +14,27 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+import os
 from django.contrib import admin
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from Rankings.sitemaps import StaticSitemap, GroupSitemap
+from Rankings.views import robots_txt
+
+sitemaps = {
+  'static': StaticSitemap,
+  'groups': GroupSitemap,
+}
 
 urlpatterns = [
-  path('admin/', admin.site.urls),
+  path('sitemap.xml', sitemap, {'sitemaps': sitemaps}, name='django.contrib.sitemaps.views.sitemap'),
+  path('robots.txt', robots_txt, name='robots_txt'),
   path('', include('Rankings.urls')),
 ]
+
+if os.environ.get("DJANGO_ENABLE_ADMIN") == "1":
+  urlpatterns.insert(0, path('admin/', admin.site.urls))
 
 # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
