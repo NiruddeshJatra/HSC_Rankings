@@ -1,5 +1,43 @@
 # Changelog
 
+## 2026-07-28 — Data integrity fixes, group-URL bug, percentile, share card
+
+- Fixed live bug: ranking-page URLs built from the raw DB group value (e.g.
+  `BUSINESS STUDIES`) produced `%20`-encoded links; `results` view now exposes
+  a canonical `group_slug` and 301-redirects any non-canonical incoming group
+  segment.
+- `SUBJECT_MAX_MARKS` replaced with a level-aware table in new
+  `Rankings/subject_maxes.py` — HSC's two-paper subjects (physics, chemistry,
+  civics, etc.) were wrongly defaulting to 100 instead of 200, understating the
+  individual-result denominator (e.g. HSC Science showed `/850` instead of
+  `/1300`). Verified zero subject marks now exceed their assigned max across
+  all three published exam sets.
+- Normalized 90,714 SSC_2025 rows where the board portal's bare `GPA=X.XX` (no
+  explicit status) was stored as a blank `result` instead of `PASS`
+  (migration `0019`); fixed `scrape_results` so SSC 2026 stores this correctly
+  at capture time; `verify_examset` now fails on any blank/null `result`.
+- Repaired 84 HSC_2024 rows where `total_marks` didn't match the sum of
+  subject fields — 80 were stuck at 0 (new `repair_zero_totals` command,
+  dry-run by default), 4 had a partial total that only counted
+  bangla+english+ict (migration `0021`, hand-verified against the raw subject
+  data before fixing). HSC_2024 re-ranked after both fixes; leaderboard top 10
+  unchanged (all affected rows were bottom-of-table).
+- Removed `choices` from `StudentInfo.exam_type` (migration `0020`) — it isn't
+  DB-enforced and forced a migration for every new exam set; validation lives
+  in `scrape_results`'s `--exam`/`--year` args.
+- Added group percentile and institution rank to the individual result page
+  (two `count()` queries against existing indexes); added a shareable result
+  card (`#share-card` in `individual_result.html`) sized for a phone
+  screenshot, with a Web Share API button (clipboard-copy fallback) and an
+  explanatory line above it so the card's purpose is obvious.
+- Desktop/mobile visual parity fix in `site.css`: student names, roll numbers,
+  institution, and marks were rendering at full/green contrast on desktop's
+  `<table>` but muted/bold on mobile's card view; desktop now matches mobile's
+  color choices (green reserved for rank numerals and GPA). Desktop body/table
+  type size bumped via `@media (min-width: 800px)`.
+- New read-only `audit_data.py` management command for future data-integrity
+  spot checks (result/gpa/marks anomalies per `--exam-type`; never writes).
+
 ## 2026-07-27 — Forest / "Graph Khata" visual redesign, brand assets
 
 - New site-wide dark theme (Marcellus + Alegreya Sans + Kalam fonts, forest-green

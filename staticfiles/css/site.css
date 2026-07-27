@@ -436,16 +436,25 @@ th { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: 
 td { color: var(--ink); }
 td.numeric, th.numeric { text-align: right; }
 td.gpa-cell { color: var(--amber); }
+td[itemprop="affiliation"] { color: var(--ink-dim); }
 
 tbody tr { transition: background 0.2s; }
 tbody tr:hover { background: rgba(143,191,111,0.08); }
 tbody tr.top-rank { background: linear-gradient(90deg, rgba(143,191,111,0.09), rgba(143,191,111,0.02)); }
 tbody tr.top-rank td.rank-cell, tbody tr.top-rank td.marks-cell { color: var(--leaf-bright); }
 
-.rank-cell, .marks-cell { font-family: var(--font-display); font-size: 16px; }
+.rank-cell, .marks-cell { font-family: var(--font-display); font-size: 16px; color: var(--ink-mid); }
 
 .individual-link a { text-decoration: none; }
+.individual-link a[itemprop="name"] { color: var(--ink); font-weight: 700; }
+.individual-link a[itemprop="identifier"] { color: var(--ink-dim); }
 .individual-link a:hover { color: var(--leaf-bright); text-decoration: underline; }
+
+@media (min-width: 800px) {
+  p { font-size: 1.05rem; }
+  th, td { font-size: 15px; }
+  .rank-cell, .marks-cell { font-size: 17.5px; }
+}
 
 .no-results { text-align: center; padding: 24px; }
 
@@ -565,6 +574,32 @@ tbody tr.top-rank td.rank-cell, tbody tr.top-rank td.marks-cell { color: var(--l
 .share-pill:hover { border-color: var(--leaf); color: var(--leaf-bright); background: rgba(143,191,111,0.08); }
 
 .result-footnote { font-size: 12.5px; color: var(--ink-dim); margin-top: 14px; line-height: 1.5; }
+
+/* ============ Shareable result card ============ */
+.share-card {
+  margin-top: 20px;
+  padding: 24px 18px 22px;
+  background: linear-gradient(160deg, rgba(143,191,111,0.12), rgba(12,17,14,0.92) 55%);
+  overflow: hidden;
+}
+.share-card-top { display: flex; justify-content: space-between; align-items: baseline; }
+.share-card-exam { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--amber); font-weight: 700; }
+.share-card-name { font-family: var(--font-display); font-size: 26px; line-height: 1.25; color: var(--ink-bright); margin-top: 10px; word-break: break-word; }
+.share-card-meta { font-size: 13px; color: var(--ink-dim); margin-top: 6px; line-height: 1.6; overflow-wrap: anywhere; }
+
+.share-card-stats { display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap; }
+.share-card-stat { display: flex; flex-direction: column; }
+.share-card-stat-label { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-dim); font-weight: 700; }
+.share-card-stat-value { font-family: var(--font-display); font-size: 21px; color: var(--ink-bright); margin-top: 3px; }
+.share-card-stat-max { font-size: 12px; color: var(--ink-faint); font-family: var(--font-body); }
+.share-card-stat-gpa .share-card-stat-value { color: var(--amber); font-size: 26px; }
+.share-card-pass { color: var(--leaf-bright); }
+.share-card-fail { color: var(--copper); }
+
+.share-card-line { font-size: 12.5px; color: var(--ink-mid); margin-top: 12px; }
+.share-card-host { font-size: 10.5px; color: var(--ink-faint); margin-top: 20px; letter-spacing: 0.06em; }
+
+.share-card-actions { margin-top: 12px; }
 
 @media (max-width: 550px) {
   .result-container { padding: 16px 12px 24px; }

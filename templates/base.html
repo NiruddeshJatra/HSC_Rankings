@@ -117,7 +117,7 @@
           </span>
         </a>
         <div class="search-btn">
-          <form method="get" action="{% url 'rankings:results' exam=exam|default:'hsc' year=year|default:'2024' group=group|default:'science' %}" role="search" aria-label="Search student results">
+          <form method="get" action="{% url 'rankings:results' exam=exam|default:'hsc' year=year|default:'2024' group=group_slug|default:'science' %}" role="search" aria-label="Search student results">
             <input type="text"
                   id="roll-search"
                   name="roll_no"
@@ -142,7 +142,7 @@
           <span class="exam-type-label">{{ grp.grouper|upper }}</span>
           <div class="exam-year-chips">
             {% for item in grp.list %}
-            <a href="{% url 'rankings:results' exam=item.exam year=item.year group=group|default:'science' %}"
+            <a href="{% url 'rankings:results' exam=item.exam year=item.year group=group_slug|default:'science' %}"
                class="exam-year-chip tabular{% if item.exam == exam and item.year == year %} active{% endif %}">{{ item.year }}</a>
             {% endfor %}
           </div>

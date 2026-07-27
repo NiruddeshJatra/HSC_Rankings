@@ -15,13 +15,7 @@ class StudentInfo(models.Model):
   result = models.CharField(max_length=100, null=True, blank=True)
   gpa = models.CharField(max_length=100, null=True, blank=True)
   rank = models.IntegerField(null=True, blank=True)
-  EXAM_TYPE_CHOICES = [
-    ('HSC_2024', 'HSC 2024'),
-    ('SSC_2025', 'SSC 2025'),
-    ('HSC_2025', 'HSC 2025'),
-    ('SSC_2026', 'SSC 2026'),
-  ]
-  exam_type = models.CharField(max_length=10, choices=EXAM_TYPE_CHOICES, default='HSC_2024')
+  exam_type = models.CharField(max_length=10, default='HSC_2024')
 
   class Meta:
     unique_together = ('roll_no', 'exam_type')
