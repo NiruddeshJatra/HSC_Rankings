@@ -19,8 +19,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--exam-type', required=True, help='e.g. HSC_2024')
-        parser.add_argument('--dry-run', action='store_true', help='List affected rows without writing (default)')
-        parser.add_argument('--apply', action='store_true', help='Write the repaired total_marks')
+
+        mode_group = parser.add_mutually_exclusive_group()
+        mode_group.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='List affected rows without writing (default)',
+        )
+        mode_group.add_argument(
+            '--apply',
+            action='store_true',
+            help='Write the repaired total_marks',
+        )
 
     def handle(self, *args, **options):
         exam_type = options['exam_type']

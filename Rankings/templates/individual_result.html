@@ -156,6 +156,7 @@
             navigator.share({ text: btn.getAttribute('data-share-text'), url: url }).catch(function () {});
             return;
           }
+          if (!navigator.clipboard || !navigator.clipboard.writeText) return;
           navigator.clipboard.writeText(url).catch(function () {});
           label.textContent = 'Copied';
           setTimeout(function () { label.textContent = 'Share'; }, 1600);
