@@ -11,6 +11,8 @@
     />
     <meta name="author" content="SSC, HSC Rankings Bangladesh" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- TODO: this token predates the current Search Console setup; replace with
+         the token issued for the boardexamrankings.vercel.app URL-prefix property -->
     <meta name="google-site-verification"     content="npRsPcwc1npjGdnGB1kwqHefFB5fYXbKest-KOM3wVQ" />
 
     <link rel="canonical" href="{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% if students.number and students.number > 1 %}?page={{ students.number }}{% endif %}{% endblock %}" />
@@ -20,7 +22,7 @@
     <meta name="bingbot" content="index, follow" />
     <meta name="yandexbot" content="index, follow" />
 
-    <meta property="og:title" content="{% block og_title %}SSC, HSC Result 2025 Bangladesh - Board Exam Rankings{% endblock %}" />
+    <meta property="og:title" content="{% block og_title %}Chittagong Board SSC & HSC Result Rankings{% endblock %}" />
     <meta property="og:description" content="{% block og_description %}Check latest SSC, HSC Chittagong Board exam results and rankings for Bangladesh. Find merit lists for Science, Commerce, and Arts groups.{% endblock %}" />
     <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'screenshots/home.png' %}{% endblock %}" />
     <meta property="og:type" content="website" />
@@ -30,7 +32,7 @@
 
     <!-- Enhanced Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="{% block twitter_title %}SSC, HSC Result 2025 Bangladesh - Board Exam Rankings{% endblock %}" />
+    <meta name="twitter:title" content="{% block twitter_title %}Chittagong Board SSC & HSC Result Rankings{% endblock %}" />
     <meta name="twitter:description" content="{% block twitter_description %}Find SSC, HSC board exam rankings for Bangladesh. Check merit lists for Science, Commerce, Arts groups.{% endblock %}" />
     <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'screenshots/home.png' %}{% endblock %}" />
     <meta name="twitter:site" content="@SSCHSCRankingsBD" />
@@ -78,7 +80,7 @@
       "@type": "WebSite",
       "name": "SSC, HSC Rankings Bangladesh",
       "url": "{{ request.scheme }}://{{ request.get_host }}/",
-      "description": "Comprehensive SSC, HSC board exam results and rankings for Bangladesh education boards including Science, Commerce, and Arts groups",
+      "description": "Comprehensive SSC, HSC board exam results and rankings for Chittagong board including Science, Commerce, and Arts groups",
       "address": {
         "@type": "PostalAddress",
         "addressCountry": "BD",
@@ -87,21 +89,6 @@
       "areaServed": {
         "@type": "Country",
         "name": "Bangladesh"
-      }
-    }
-  </script>
-
-  <!-- Additional Schema for Website -->
-  <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "WebSite",
-      "url": "{{ request.scheme }}://{{ request.get_host }}/",
-      "name": "SSC, HSC Rankings Bangladesh",
-      "description": "Find SSC, HSC board exam results and rankings for Bangladesh. Check merit lists, individual student results, and college rankings.",
-      "publisher": {
-        "@type": "Organization",
-        "name": "SSC, HSC Rankings Bangladesh"
       }
     }
   </script>
@@ -152,19 +139,18 @@
         <div class="contact-info">
           <h3>Contact</h3>
           <address>
-            <p>Email: <a href="mailto:nasifulalam1212@gmail.com">nasifulalam1212@gmail.com</a></p>
-            <p>Phone: <a href="tel:+8801626181662">+8801626181662</a></p>
-            <p>GitHub: <a href="https://github.com/NiruddeshJatra" target="_blank" rel="noopener">NiruddeshJatra</a></p>
+            <p>Email: <a href="mailto:nasif@niruddeshjatra.space">nasif@niruddeshjatra.space</a></p>
           </address>
         </div>
         <div class="footer-links">
           <h3>Exam Sets</h3>
-          <p><a href="{% url 'rankings:results' exam='hsc' year='2024' group='science' %}">HSC 2024</a></p>
-          <p><a href="{% url 'rankings:results' exam='ssc' year='2025' group='science' %}">SSC 2025</a></p>
-          <p><a href="{% url 'rankings:results' exam='hsc' year='2025' group='science' %}">HSC 2025</a></p>
+          {% for exam_set in footer_exam_sets %}
+          <p><a href="{% url 'rankings:results' exam=exam_set.exam year=exam_set.year group='science' %}">{{ exam_set.label }}</a></p>
+          {% endfor %}
           <p><a href="{% url 'rankings:methodology' %}">Methodology &amp; Disclaimer</a></p>
         </div>
       </div>
+      <p class="footer-credit">Built by <a href="https://niruddeshjatra.space" target="_blank" rel="noopener">Niruddesh Jatra</a></p>
     </footer>
   </body>
 </html>

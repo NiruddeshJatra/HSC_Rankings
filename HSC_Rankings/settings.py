@@ -34,6 +34,11 @@ ALLOWED_HOSTS = os.environ.get(
 
 CSRF_TRUSTED_ORIGINS = ["https://*.vercel.app"]
 
+# Supabase transaction pooler (port 6543) doesn't support server-side cursors.
+# Without this, QuerySet.iterator() (used by scraper/transfer commands) fails
+# at runtime with an opaque pooler error.
+DISABLE_SERVER_SIDE_CURSORS = True
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 if not DEBUG:
@@ -80,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'Rankings.context_processors.exam_sets',
             ],
         },
     },
@@ -94,14 +100,14 @@ import dj_database_url
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        default=f"sqlite:///{BASE_DIR / 'db_legacy.sqlite3'}",
         conn_max_age=0,  # serverless: never reuse connections
         ssl_require=not DEBUG,
     ),
     # Source database for the transfer_to_postgres management command only.
     'LEGACY_SQLITE': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",
+        'NAME': BASE_DIR / "db_legacy.sqlite3",
     },
 }
 

@@ -2,3 +2,10 @@ hsc_rankings_venv/
 data.yaml
 .env
 db.sqlite3
+__pycache__
+db_legacy.sqlite3
+setenv.ps1
+.venv/
+misses_*.txt
+staticfiles/
+exam_result_backup.sql
