@@ -83,12 +83,43 @@ def individual_result(request, exam, year, roll_no):
     student = get_object_or_404(StudentInfo, roll_no=roll_no, exam_type=exam_type_db)
     marks = get_object_or_404(Marks, student=student)
 
-    # Subject name mapping (unchanged)
+    # Subject name mapping
     SUBJECT_LABELS_MAP = {
         'bangla': 'Bangla',
         'english': 'English',
-        # ... (keep all existing subject mappings)
-        'islamic_history': 'Islamic History',
+        'math': 'Mathematics',
+        'physics': 'Physics',
+        'chemistry': 'Chemistry',
+        'biology': 'Biology',
+        'higher_math': 'Higher Mathematics',
+        'ict': 'ICT',
+        'islam_moral': 'Islam and Moral Education',
+        'hindu_moral': 'Hindu Religion and Moral Education',
+        'buddha_moral': 'Buddhist Religion and Moral Education',
+        'christian_moral': 'Christian Religion and Moral Education',
+        'bangladesh_world': 'Bangladesh and Global Studies',
+        'agriculture': 'Agriculture Studies',
+        'home_science': 'Home Science',
+        'finance_banking': 'Finance and Banking',
+        'accounting': 'Accounting',
+        'business_ent': 'Business Entrepreneurship',
+        'general_science': 'General Science',
+        'music': 'Music',
+        'geography': 'Geography',
+        'civics': 'Civics and Good Governance',
+        'economics': 'Economics',
+        'history_bd': 'Bangladesh History',
+        'statistics': 'Statistics',
+        'management': 'Business Organization and Management',
+        'finance': 'Finance, Banking and Insurance',
+        'production': 'Production Management and Marketing',
+        'logic': 'Logic',
+        'history': 'History',
+        'islamic_history': 'Islamic History and Culture',
+        'social_work': 'Social Work',
+        'sociology': 'Sociology',
+        'physical_education': 'Physical Education, Health and Sports',
+        'career_education': 'Career Education',
     }
     subject_fields = []
     for field in Marks._meta.get_fields():

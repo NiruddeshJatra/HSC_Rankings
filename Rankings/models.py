@@ -19,6 +19,7 @@ class StudentInfo(models.Model):
     ('HSC_2024', 'HSC 2024'),
     ('SSC_2025', 'SSC 2025'),
     ('HSC_2025', 'HSC 2025'),
+    ('SSC_2026', 'SSC 2026'),
   ]
   exam_type = models.CharField(max_length=10, choices=EXAM_TYPE_CHOICES, default='HSC_2024')
 
