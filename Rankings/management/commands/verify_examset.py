@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import Count
+from django.db.models import Count, Q
 
 from Rankings.models import StudentInfo
 
@@ -32,13 +32,17 @@ class Command(BaseCommand):
 
         null_rank = qs.filter(rank__isnull=True).count()
         zero_marks = qs.filter(marks__total_marks=0).count()
+        blank_result = qs.filter(Q(result__isnull=True) | Q(result='')).count()
 
         self.stdout.write(f"=== Sanity report: {exam_type} ===")
         self.stdout.write(f"Total student rows: {total}")
         self.stdout.write(f"Rows with rank IS NULL: {null_rank}")
         self.stdout.write(f"Rows with total_marks == 0: {zero_marks}")
+        self.stdout.write(f"Rows with result IS NULL or blank: {blank_result}")
         if null_rank:
             problems.append(f"{null_rank} rows with rank IS NULL")
+        if blank_result:
+            problems.append(f"{blank_result} rows with result IS NULL or blank")
 
         # GPA distribution
         self.stdout.write("\nGPA distribution:")

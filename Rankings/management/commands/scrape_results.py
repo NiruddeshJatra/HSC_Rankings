@@ -119,6 +119,12 @@ def parse_ssc(html, roll, subject_map):
         result = result_gpa
         gpa_str = ''
 
+    if not result and gpa_str:
+        # The board portal prints no status text for passing students -
+        # it shows "GPA=X.XX" alone. Store that inferred status explicitly
+        # rather than leaving result blank.
+        result = 'PASS'
+
     marks_data = {field: 0 for field in subject_map.values()}
     matched_codes = []
     unknown_codes = {}

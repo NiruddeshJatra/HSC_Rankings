@@ -70,6 +70,18 @@
         <span class="info-label">Board</span>
         <span class="info-value">{{ student.board }}</span>
       </div>
+      {% if percentile %}
+      <div class="info-row">
+        <span class="info-label">Group Percentile</span>
+        <span class="info-value tabular">Rank {{ percentile.rank }} of {{ percentile.total }} &middot; top {{ percentile.top_pct }}%</span>
+      </div>
+      {% endif %}
+      {% if institution_rank %}
+      <div class="info-row">
+        <span class="info-label">Institution Rank</span>
+        <span class="info-value tabular">{{ institution_rank.rank }} of {{ institution_rank.total }} at {{ student.institute }}</span>
+      </div>
+      {% endif %}
     </div>
 
     <h2 class="fade-up stagger-5">Subject Marks</h2>
@@ -93,6 +105,63 @@
         <span class="tabular">{{ marks.total_marks }} <span class="subject-total-max">/ {{ total_max }}</span></span>
       </div>
     </div>
+
+    <!-- Shareable result card (screenshot target) -->
+    <p class="share-label fade-up stagger-6">Share your result — this card is what gets sent or screenshotted:</p>
+    <div class="card share-card fade-up stagger-7" id="share-card">
+      <div class="share-card-top">
+        <span class="share-card-exam">{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} &middot; {{ student.group|title }}</span>
+      </div>
+      <h2 class="share-card-name">{{ student.name }}</h2>
+      <div class="share-card-meta">Roll {{ student.roll_no }} &middot; {{ student.institute }}</div>
+      <div class="share-card-stats">
+        <div class="share-card-stat share-card-stat-gpa">
+          <span class="share-card-stat-label">GPA</span>
+          <span class="share-card-stat-value">{{ student.gpa }}</span>
+        </div>
+        <div class="share-card-stat">
+          <span class="share-card-stat-label">Marks</span>
+          <span class="share-card-stat-value tabular">{{ marks.total_marks }}<span class="share-card-stat-max">/{{ total_max }}</span></span>
+        </div>
+        {% if student.result %}
+        <div class="share-card-stat">
+          <span class="share-card-stat-label">Result</span>
+          <span class="share-card-stat-value {% if student.result == 'PASS' %}share-card-pass{% elif student.result == 'FAIL' %}share-card-fail{% endif %}">{{ student.result }}</span>
+        </div>
+        {% endif %}
+      </div>
+      {% if percentile %}
+      <div class="share-card-line">Top {{ percentile.top_pct }}% of group &middot; rank {{ percentile.rank }} of {{ percentile.total }}</div>
+      {% endif %}
+      {% if institution_rank %}
+      <div class="share-card-line">Institution rank {{ institution_rank.rank }} of {{ institution_rank.total }}</div>
+      {% endif %}
+      <div class="share-card-host">{{ request.get_host }}</div>
+    </div>
+    <div class="share-card-actions fade-up stagger-7">
+      <button type="button" class="share-pill" id="share-card-btn"
+              data-share-url="{{ request.build_absolute_uri }}"
+              data-share-text="{{ student.name }} &middot; GPA {{ student.gpa }} &middot; rank {{ student.rank|default:'N/A' }} in {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"></line><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"></line></svg>
+        <span data-share-label>Share</span>
+      </button>
+    </div>
+    <script>
+      (function () {
+        var btn = document.getElementById('share-card-btn');
+        var label = btn.querySelector('[data-share-label]');
+        var url = btn.getAttribute('data-share-url');
+        btn.addEventListener('click', function () {
+          if (navigator.share) {
+            navigator.share({ text: btn.getAttribute('data-share-text'), url: url }).catch(function () {});
+            return;
+          }
+          navigator.clipboard.writeText(url).catch(function () {});
+          label.textContent = 'Copied';
+          setTimeout(function () { label.textContent = 'Share'; }, 1600);
+        });
+      })();
+    </script>
 
     <!-- Social Share -->
     <div class="share-buttons fade-up stagger-7">

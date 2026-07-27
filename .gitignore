@@ -8,3 +8,4 @@ setenv.ps1
 .venv/
 misses_*.txt
 exam_result_backup.sql
+.gstack/

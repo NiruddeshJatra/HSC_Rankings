@@ -18,6 +18,9 @@ Rankings/
                            #   (published + collecting), used by header nav, footer,
                            #   and home's "All rankings" index
   subject_maps.py         # subject label/code mappings
+  subject_maxes.py         # per-subject max marks, keyed by exam level (HSC/SSC
+                           #   prefix of exam_type) — single source of truth for
+                           #   the individual-result denominator, not a flat dict
   templatetags/marks_extras.py  # stagger_class/subject_stagger_class/bar_class —
                                  # CSS-class helpers so templates need no style=""
   management/commands/
@@ -25,8 +28,12 @@ Rankings/
     transfer_to_postgres.py # legacy sqlite -> Postgres migration
     rank_students.py        # computes rank per exam_type/group
     publish_examset.py      # flips ExamSet.rankings_published (refuses if any rank IS NULL)
-    verify_examset.py
+    verify_examset.py       # sanity report; fails if any row has rank or result NULL/blank
     check_ranks.py
+    audit_data.py           # read-only data-integrity report (result/gpa/marks
+                             #   anomalies) per --exam-type; never writes
+    repair_zero_totals.py   # --dry-run (default) / --apply: fixes total_marks=0
+                             #   rows where subject fields hold real marks
   templates/               # app-local templates (home, results, individual_result,
                            #   roll_not_found — dedicated 404 for a valid exam/year
                            #   with no matching roll_no)
@@ -63,9 +70,25 @@ db_legacy.sqlite3        # gitignored backup only — never the active DB, never
   add new buckets there and in `site.css` rather than reaching for `style=""`.
   All icons are inline SVG copied from the design reference; no icon fonts, no
   raster share-icon PNGs.
-- Subject max-marks (`SUBJECT_MAX_MARKS` in `views.py`) are public BD board
-  syllabus constants (e.g. Bangla/English=200, ICT=50, else 100) used only to
-  size the subject-marks progress bars — not derived from any student's data.
+- Subject max-marks live in `Rankings/subject_maxes.py` (`subject_max(exam_type,
+  field_name)`), keyed by exam **level** (HSC vs SSC prefix of `exam_type`), not
+  a flat dict — HSC subjects outside bangla/english/ict are 200 (two-paper), SSC
+  ones are 100. Public BD board syllabus constants, not derived from student
+  data. Raises on an unrecognised level; don't reintroduce a single shared
+  default, that's exactly the bug this replaced.
+- Ranking-page URLs use a canonical `group_slug` (lowercase, spaces→underscores,
+  e.g. `business_studies`), exposed by the `results` view and used everywhere a
+  URL is built (`templates/base.html`, `results.html`). The view 301-redirects
+  any non-canonical incoming group segment (wrong case, `%20`, etc.) to the
+  canonical URL — don't build group URLs from the raw DB value again.
+- `StudentInfo.exam_type` has no DB-level `choices` (removed — every new exam
+  set was forcing a migration). Validation lives in `scrape_results` via
+  `--exam {hsc,ssc}` + a 4-digit `--year` check.
+- WhiteNoise serves static files from `staticfiles/`, not `static/`, and when
+  `DEBUG=0` (true locally too, per `.env`) it caches at **process start** — a
+  running `runserver` will keep serving pre-edit CSS/JS even after
+  `collectstatic` regenerates `staticfiles/`. Restart the server after any
+  static asset change, not just collectstatic.
 - `publish_examset --publish` refuses if any row in that exam_type has
   `rank IS NULL` — this is an intentional data-integrity gate, not a bug.
 - Never hardcode `boardexamrankings.vercel.app` in templates/views — derive from

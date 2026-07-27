@@ -3,6 +3,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 from .models import StudentInfo, Marks, ExamSet
+from .subject_maxes import subject_max
 from django.core.paginator import Paginator
 
 VALID_EXAMS = {'hsc', 'ssc'}
@@ -34,6 +35,7 @@ def robots_txt(request):
 
 def results(request, exam, year, group):
     exam, year = _validate_exam_year(exam, year)
+    group_raw = group
     group = group.lower()
     if request.GET.get('roll_no'):
         roll_no = request.GET['roll_no']
@@ -44,6 +46,14 @@ def results(request, exam, year, group):
     if group_db == 'BUSINESS_STUDIES':
         group_db = 'BUSINESS STUDIES'
 
+    group_slug = group_db.lower().replace(' ', '_')
+    if group_raw != group_slug:
+        canonical_url = reverse('rankings:results', kwargs={'exam': exam, 'year': year, 'group': group_slug})
+        query = request.GET.urlencode()
+        if query:
+            canonical_url = f'{canonical_url}?{query}'
+        return redirect(canonical_url, permanent=True)
+
     exam_type_db = f"{exam.upper()}_{year}"
 
     exam_set = ExamSet.objects.filter(exam_type=exam_type_db).first()
@@ -52,6 +62,7 @@ def results(request, exam, year, group):
     if not rankings_published:
         context = {
             'group': group_db,
+            'group_slug': group_slug,
             'exam': exam,
             'year': year,
             'exam_type': exam_type_db,
@@ -68,6 +79,7 @@ def results(request, exam, year, group):
     context = {
         'students': page_obj,
         'group': group_db,
+        'group_slug': group_slug,
         'exam': exam,
         'year': year,
         'exam_type': exam_type_db,
@@ -125,10 +137,6 @@ def individual_result(request, exam, year, roll_no):
         'physical_education': 'Physical Education, Health and Sports',
         'career_education': 'Career Education',
     }
-    # Standard BD board syllabus max marks per subject (public curriculum constants,
-    # not derived from this student's data) — used only to draw the progress bars.
-    SUBJECT_MAX_MARKS = {'bangla': 200, 'english': 200, 'ict': 50}
-
     subjects = []
     for field in Marks._meta.get_fields():
         if (
@@ -142,13 +150,37 @@ def individual_result(request, exam, year, roll_no):
             label = SUBJECT_LABELS_MAP.get(field.name)
             if not label:
                 label = field.name.replace('_', ' ').title()
-            max_marks = SUBJECT_MAX_MARKS.get(field.name, 100)
+            max_marks = subject_max(exam_type_db, field.name)
             subjects.append({
                 'label': label,
                 'marks': value,
                 'max': max_marks,
                 'pct': min(round(value / max_marks * 100), 100),
             })
+
+    percentile = None
+    if student.rank:
+        total_ranked = StudentInfo.objects.filter(
+            exam_type=exam_type_db, group=student.group, rank__isnull=False,
+        ).count()
+        if total_ranked:
+            percentile = {
+                'rank': student.rank,
+                'total': total_ranked,
+                'top_pct': round(student.rank / total_ranked * 100, 1),
+            }
+
+    institution_rank = None
+    if student.institute:
+        institute_qs = StudentInfo.objects.filter(
+            exam_type=exam_type_db, group=student.group, institute=student.institute,
+        )
+        institute_total = institute_qs.count()
+        higher_in_institute = institute_qs.filter(marks__total_marks__gt=marks.total_marks).count()
+        institution_rank = {
+            'rank': higher_in_institute + 1,
+            'total': institute_total,
+        }
 
     context = {
         'student': student,
@@ -158,5 +190,7 @@ def individual_result(request, exam, year, roll_no):
         'exam_type': exam_type_db,
         'subjects': subjects,
         'total_max': sum(s['max'] for s in subjects),
+        'percentile': percentile,
+        'institution_rank': institution_rank,
     }
     return render(request, 'individual_result.html', context)

@@ -74,7 +74,7 @@
       <span class="eyebrow">Your result is ready</span>
       <h2>Look up your marks now</h2>
       <p>Individual results are already in from the board portal. Enter a roll number to see full subject-wise marks and GPA.</p>
-      <form method="get" action="{% url 'rankings:results' exam=exam year=year group=group|lower %}" role="search" aria-label="Search student results" class="joined-form">
+      <form method="get" action="{% url 'rankings:results' exam=exam year=year group=group_slug %}" role="search" aria-label="Search student results" class="joined-form">
         <input type="text" inputmode="numeric" name="roll_no" placeholder="Roll number, e.g. 118342" aria-label="Roll number" required>
         <button type="submit">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
