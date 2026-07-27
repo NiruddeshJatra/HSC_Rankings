@@ -29,69 +29,87 @@
 {% block robots %}noindex, follow{% endblock %}
 
 {% block content %}
-  <link rel="stylesheet" href="{% static 'css/individual_result.css' %}">
+  <div class="result-container">
+    <div class="eyebrow fade-up stagger-0">{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} &middot; {{ student.group|upper }} &middot; {{ student.board|upper }} BOARD</div>
+    <h1 class="fade-up stagger-1">{{ student.name }}</h1>
+    <div class="result-subline tabular fade-up stagger-2">Roll {{ student.roll_no }} &middot; {{ student.institute }}</div>
 
-  <div class="student-container">
-    <div class="student-info">
-      <h1>Student Information</h1>
-      <p><strong>Name:</strong>  {{ student.name }}</p>
-      <p><strong>Roll Number:</strong> {{ student.roll_no }}</p>
-      <p><strong>Group:</strong> {{ student.group }}</p>
-      <p><strong>Rank:</strong> {{ student.rank }}</p>
-      <p><strong>Board:</strong> {{ student.board }}</p>
-      <p><strong>Session:</strong> {{ student.session }}</p>
-      <p><strong>Type of Result:</strong> {{ student.type_of_result }}</p>
-      <p><strong>Result:</strong> {{ student.result }}</p>
-      <p><strong>GPA:</strong> {{ student.gpa }}</p>
-      <p><strong>Institute:</strong> {{ student.institute }}</p>
+    <div class="stat-grid fade-up stagger-3">
+      <div class="card stat-tile stat-tile-amber">
+        <div class="stat-label">Result</div>
+        <div class="stat-value">{{ student.result }}</div>
+      </div>
+      <div class="card stat-tile stat-tile-amber">
+        <div class="stat-label">GPA</div>
+        <div class="stat-value tabular">{{ student.gpa }}</div>
+      </div>
+      <div class="card stat-tile stat-tile-green">
+        <div class="stat-label">Total Marks</div>
+        <div class="stat-value stat-value-accent tabular">{{ marks.total_marks }}</div>
+      </div>
+      <div class="card stat-tile stat-tile-green">
+        <div class="stat-label">Rank</div>
+        <div class="stat-value stat-value-accent tabular">{{ student.rank }}</div>
+      </div>
     </div>
 
-    <div class="subject-marks">
-      <h1>Subject Marks</h1>
-      <p style="font-size:1.2rem; font-weight:600; margin-bottom: 12px;">Total Marks: {{ marks.total_marks }}</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Subject</th>
-            <th>Marks</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for field, label in subject_fields %}
-            {% if marks|get_field:field > 0 %}
-              <tr>
-                <td><strong>{{ label }}</strong></td>
-                <td>{{ marks|get_field:field }}</td>
-              </tr>
-            {% endif %}
-          {% endfor %}
-        </tbody>        
-      </table>
+    <div class="card info-card fade-up stagger-4">
+      <div class="info-row">
+        <span class="info-label">Group</span>
+        <span class="info-value">{{ student.group }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Session</span>
+        <span class="info-value tabular">{{ student.session }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Type of Result</span>
+        <span class="info-value">{{ student.type_of_result }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">Board</span>
+        <span class="info-value">{{ student.board }}</span>
+      </div>
     </div>
-  </div>
 
-  <!-- Social Share Buttons -->
-  <div class="share-buttons">
-    <p style="font-size: 0.8rem;">Share this result:</p>
-    <!-- X -->
-    <a href="https://x.com/share?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!" target="_blank">
-      <img src="{% static 'images/twitter.png' %}" alt="Share on X (Twitter)"  style="width: 24px; height: 24px; margin: 0 8px;"/>
-    </a>
-    <!-- Facebook -->
-    <a href="https://www.facebook.com/sharer.php?u={{ request.build_absolute_uri }}" target="_blank">
-      <img src="{% static 'images/facebook.png' %}" alt="Share on Facebook" style="width: 24px; height: 24px; margin: 0 8px;"/>
-    </a>
-    <!-- WhatsApp -->
-    <a href="https://api.whatsapp.com/send?text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!%20{{ request.build_absolute_uri }}" target="_blank">
-      <img src="{% static 'images/whatsapp.png' %}" alt="Share on WhatsApp" style="width: 24px; height: 24px; margin: 0 8px;"/>
-    </a>
-    <!-- Instagram -->
-    <a href="https://instagram.com" target="_blank" title="Copy the link and share it on Instagram">
-      <img src="{% static 'images/instagram.png' %}" alt="Share on Instagram" style="width: 24px; height: 24px; margin: 0 8px;"/>
-    </a>
-    <!-- Telegram -->
-    <a href="https://telegram.me/share/url?url={{ request.build_absolute_uri }}&text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!" target="_blank">
-      <img src="{% static 'images/telegram.png' %}" alt="Share on Telegram" style="width: 24px; height: 24px; margin: 0 8px;"/>
-    </a>
+    <h2 class="fade-up stagger-5">Subject Marks</h2>
+    <div class="card subject-card fade-up stagger-6">
+      <div class="subject-header">
+        <span>Subject</span><span>Marks</span>
+      </div>
+      {% for sub in subjects %}
+        <div class="subject-row">
+          <div class="subject-row-line">
+            <span>{{ sub.label }}</span>
+            <span class="tabular">{{ sub.marks }} <span class="subject-row-max">/ {{ sub.max }}</span></span>
+          </div>
+          <div class="subject-bar-track">
+            <div class="subject-bar-fill {{ sub.pct|bar_class }} {{ forloop.counter0|subject_stagger_class }}"></div>
+          </div>
+        </div>
+      {% endfor %}
+      <div class="subject-total">
+        <span>Total</span>
+        <span class="tabular">{{ marks.total_marks }} <span class="subject-total-max">/ {{ total_max }}</span></span>
+      </div>
+    </div>
+
+    <!-- Social Share -->
+    <div class="share-buttons fade-up stagger-7">
+      <span class="share-label">Share this result:</span>
+      <a class="share-pill" href="https://api.whatsapp.com/send?text=Check%20out%20{{ student.name }}'s%20{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}%20results!%20{{ request.build_absolute_uri }}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.7.8-.8 1-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.6-1.3.1-.2 0-.4 0-.5l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.2.3-.9.9-.9 2.2s1 2.5 1.1 2.7c.1.2 1.9 3 4.7 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.2-.2-.5-.3z"></path></svg>
+        WhatsApp
+      </a>
+      <a class="share-pill" href="https://www.facebook.com/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22 12a10 10 0 1 0-11.6 9.9v-7H7.9V12h2.5V9.8c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.5h-1.3c-1.2 0-1.6.8-1.6 1.6V12h2.8l-.4 2.9h-2.4v7A10 10 0 0 0 22 12z"></path></svg>
+        Facebook
+      </a>
+      <button type="button" class="share-pill" data-copy-link="{{ request.build_absolute_uri }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"></path><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"></path></svg>
+        <span data-copy-label>Copy link</span>
+      </button>
+    </div>
+    <p class="result-footnote fade-up stagger-8">The board's published result is authoritative. This page shows no guardian names or registration numbers — see <a href="{% url 'rankings:methodology' %}">privacy &amp; removal</a>.</p>
   </div>
 {% endblock %}

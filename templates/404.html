@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Page not found - Board Exam Rankings{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+<div class="state-container">
+  <div class="state-kicker">404</div>
+  <div class="card state-card fade-up stagger-0">
+    <div class="state-code">404<span class="state-scribble">off the chart!</span></div>
+    <h1>Page not found</h1>
+    <p>The address may be mistyped, or the page has moved. Every ranking is reachable from the <a href="{% url 'rankings:home' %}">homepage index</a>.</p>
+  </div>
+</div>
+{% endblock %}

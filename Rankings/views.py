@@ -73,6 +73,7 @@ def results(request, exam, year, group):
         'exam_type': exam_type_db,
         'page_range': page_range,
         'rankings_published': True,
+        'last_ranked_at': exam_set.last_ranked_at,
     }
     return render(request, 'results.html', context)
 
@@ -80,7 +81,10 @@ def individual_result(request, exam, year, roll_no):
     exam, year = _validate_exam_year(exam, year)
     exam_type_db = f"{exam.upper()}_{year}"
 
-    student = get_object_or_404(StudentInfo, roll_no=roll_no, exam_type=exam_type_db)
+    student = StudentInfo.objects.filter(roll_no=roll_no, exam_type=exam_type_db).first()
+    if not student:
+        context = {'exam': exam, 'year': year, 'roll_no': roll_no}
+        return render(request, 'roll_not_found.html', context, status=404)
     marks = get_object_or_404(Marks, student=student)
 
     # Subject name mapping
@@ -121,17 +125,30 @@ def individual_result(request, exam, year, roll_no):
         'physical_education': 'Physical Education, Health and Sports',
         'career_education': 'Career Education',
     }
-    subject_fields = []
+    # Standard BD board syllabus max marks per subject (public curriculum constants,
+    # not derived from this student's data) — used only to draw the progress bars.
+    SUBJECT_MAX_MARKS = {'bangla': 200, 'english': 200, 'ict': 50}
+
+    subjects = []
     for field in Marks._meta.get_fields():
         if (
             field.name not in ['id', 'student', 'total_marks']
             and hasattr(field, 'get_internal_type')
             and field.get_internal_type() in ['IntegerField', 'PositiveIntegerField']
         ):
+            value = getattr(marks, field.name)
+            if not value:
+                continue
             label = SUBJECT_LABELS_MAP.get(field.name)
             if not label:
                 label = field.name.replace('_', ' ').title()
-            subject_fields.append((field.name, label))
+            max_marks = SUBJECT_MAX_MARKS.get(field.name, 100)
+            subjects.append({
+                'label': label,
+                'marks': value,
+                'max': max_marks,
+                'pct': min(round(value / max_marks * 100), 100),
+            })
 
     context = {
         'student': student,
@@ -139,6 +156,7 @@ def individual_result(request, exam, year, roll_no):
         'exam': exam,
         'year': year,
         'exam_type': exam_type_db,
-        'subject_fields': subject_fields,
+        'subjects': subjects,
+        'total_max': sum(s['max'] for s in subjects),
     }
     return render(request, 'individual_result.html', context)

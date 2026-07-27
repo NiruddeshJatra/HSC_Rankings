@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
+{% load marks_extras %}
 
 {% block title %}
   {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}
@@ -27,21 +29,11 @@
   Result - Merit List
 {% endblock %}
 
-{% block og_description %}
-  {{ block.super }}
-{% endblock %}
-
-{% block twitter_title %}
-  {{ block.super }}
-{% endblock %}
-
-{% block twitter_description %}
-  {{ block.super }}
-{% endblock %}
+{% block og_description %}{{ block.super }}{% endblock %}
+{% block twitter_title %}{{ block.super }}{% endblock %}
+{% block twitter_description %}{{ block.super }}{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/home.css' %}" />
-
 <!-- Schema markup for Dataset -->
 <script type="application/ld+json">
   {
@@ -68,54 +60,74 @@
 </script>
 
 <div class="results-container">
-  <h1>{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} {{ group|lower|title }} Student Ranks</h1>
+  <h1 class="fade-up stagger-0">{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} &mdash;
+    {% if group == 'SCIENCE' %}<span class="accent-science">Science</span>
+    {% elif group == 'BUSINESS STUDIES' %}<span class="accent-commerce">Commerce</span>
+    {% elif group == 'HUMANITIES' %}<span class="accent-arts">Arts</span>
+    {% else %}{{ group|lower|title }}{% endif %} Merit List</h1>
 
   {% if not rankings_published %}
-  <p>
-    {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} results are still being
-    collected. Rankings will publish once the full dataset is in. You can look up an
-    individual roll number now using the search box above.
-  </p>
-  {% else %}
-  <p>Ranks are computed by this site from total marks — see <a href="{% url 'rankings:methodology' %}">Methodology</a>.</p>
+  <p class="fade-up stagger-1 collecting-subline">Chittagong Board · Result day</p>
 
+  <div class="collecting-stack">
+    <div class="card lookup-card fade-up stagger-2">
+      <span class="eyebrow">Your result is ready</span>
+      <h2>Look up your marks now</h2>
+      <p>Individual results are already in from the board portal. Enter a roll number to see full subject-wise marks and GPA.</p>
+      <form method="get" action="{% url 'rankings:results' exam=exam year=year group=group|lower %}" role="search" aria-label="Search student results" class="joined-form">
+        <input type="text" inputmode="numeric" name="roll_no" placeholder="Roll number, e.g. 118342" aria-label="Roll number" required>
+        <button type="submit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"></path></svg>
+          Find marks
+        </button>
+      </form>
+    </div>
+
+    <div class="progress-card fade-up stagger-3">
+      <div class="progress-card-head">
+        <span class="progress-dot"></span>
+        <span class="progress-card-title">Merit list being plotted</span>
+        <span class="progress-card-scribble">in progress&hellip;</span>
+      </div>
+      <svg viewBox="0 0 280 44" class="progress-svg" aria-hidden="true">
+        <path d="M4 40 L4 4 M4 40 L276 40" stroke="#2D4033" stroke-width="1.5" fill="none"></path>
+        <polyline points="4,36 40,32 76,33 112,26 148,22 184,24" fill="none" stroke="#8FBF6F" stroke-width="2" stroke-dasharray="400" class="curve-draw"></polyline>
+        <polyline points="184,24 220,18 256,14 276,10" fill="none" stroke="#2D4033" stroke-width="2" stroke-dasharray="4 5"></polyline>
+        <circle cx="184" cy="24" r="3.5" fill="#E5B45C"><animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"></animate></circle>
+      </svg>
+      <p>Rankings publish once every student's marks are collected — a partial table would show wrong ranks. Collection is running now and usually completes within hours. Your own marks above are final and won't change.</p>
+    </div>
+  </div>
+  {% else %}
+  <p class="results-meta fade-up stagger-1">
+    <span>Ranks are computed by this site from total marks — see <a href="{% url 'rankings:methodology' %}">Methodology</a>. Equal totals share a rank.</span>
+    <span class="results-count tabular">{{ students.paginator.count|intcomma }} students{% if last_ranked_at %} <span class="tabular">&middot; Updated {{ last_ranked_at|date:"d M Y" }}</span>{% endif %}</span>
+  </p>
+
+  <div class="card table-card fade-up stagger-2">
   <table role="table" aria-label="{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Results Merit List">
     <thead>
       <tr>
         <th scope="col">Rank</th>
-        <th scope="col">Roll Number</th>
+        <th scope="col">Roll</th>
         <th scope="col">Student Name</th>
-        <th scope="col">Total Marks</th>
-        <th scope="col">GPA</th>
+        <th scope="col" class="numeric">Total Marks</th>
+        <th scope="col" class="numeric">GPA</th>
         <th scope="col">Institution</th>
       </tr>
     </thead>
     <tbody>
       {% for student in students %}
-      <tr itemscope itemtype="https://schema.org/Person">
-        <td><strong>{{ student.rank }}</strong></td>
-        <td class="individual-link">
-          <a
-            href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}"
-            aria-label="View {{ student.name }}'s detailed results"
-            itemprop="identifier"
-          >
-            {{ student.roll_no }}
-          </a>
+      <tr itemscope itemtype="https://schema.org/Person" class="fade-up {{ forloop.counter0|stagger_class }} {% if student.rank <= 3 %}top-rank{% endif %}">
+        <td class="rank-cell tabular">{{ student.rank }}</td>
+        <td class="individual-link tabular">
+          <a href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}" aria-label="View {{ student.name }}'s detailed results" itemprop="identifier">{{ student.roll_no }}</a>
         </td>
         <td class="individual-link">
-          <a
-            href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}"
-            aria-label="View {{ student.name }}'s detailed results"
-            itemprop="name"
-            class="student-name"
-            role="link"
-          >
-            {{ student.name }}
-          </a>
+          <a href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}" aria-label="View {{ student.name }}'s detailed results" itemprop="name" role="link">{{ student.name }}</a>
         </td>
-        <td itemprop="award">{{ student.marks.total_marks|default:'N/A' }}</td>
-        <td><strong itemprop="award">{{ student.gpa|default:'N/A' }}</strong></td>
+        <td itemprop="award" class="numeric marks-cell tabular">{{ student.marks.total_marks|default:'N/A' }}</td>
+        <td class="numeric gpa-cell tabular"><span itemprop="award">{{ student.gpa|default:'N/A' }}</span></td>
         <td itemprop="affiliation">{{ student.institute|default:'N/A' }}</td>
       </tr>
       {% empty %}
@@ -127,37 +139,49 @@
       {% endfor %}
     </tbody>
   </table>
+  </div>
+
+  <div class="rank-cards fade-up stagger-2">
+    <div class="rank-card-head">
+      <div>Rank</div>
+      <div>Student</div>
+      <div>Marks</div>
+    </div>
+    {% for student in students %}
+    <a href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}"
+       class="rank-card fade-up {{ forloop.counter0|stagger_class }} {% if student.rank <= 3 %}top-rank{% endif %}"
+       aria-label="View {{ student.name }}'s detailed results">
+      <div class="rank-card-rank tabular">{{ student.rank }}</div>
+      <div class="rank-card-body">
+        <div class="rank-card-name">{{ student.name }}</div>
+        <div class="rank-card-meta tabular">Roll {{ student.roll_no }} &middot; <span class="gpa-cell">GPA {{ student.gpa|default:'N/A' }}</span></div>
+        <div class="rank-card-institute">{{ student.institute|default:'N/A' }}</div>
+      </div>
+      <div class="rank-card-marks tabular">{{ student.marks.total_marks|default:'N/A' }}</div>
+    </a>
+    {% empty %}
+    <p class="no-results">No results found. Please try a different search term.</p>
+    {% endfor %}
+  </div>
   {% endif %}
 </div>
 
 {% if rankings_published %}
 <!-- Pagination for more results -->
 <div aria-label="Results pagination" class="pagination">
-  <span class="step-links">
-    {% if students.has_previous %}
-      <a href="?page=1" aria-label="Go to first page">&laquo; First</a>
-      <a href="?page={{ students.previous_page_number }}" aria-label="Go to previous page">Previous</a>
-    {% endif %}
+  {% if students.has_previous %}
+    <a href="?page={{ students.previous_page_number }}" aria-label="Go to previous page">&lsaquo; Previous</a>
+  {% else %}
+    <span class="ghost" aria-disabled="true">&lsaquo; Previous</span>
+  {% endif %}
 
-    <span class="current" aria-current="page">
-      Page {{ students.number }} of {{ students.paginator.num_pages }}
-    </span>
+  <span class="current tabular" aria-current="page">Page {{ students.number }} of {{ students.paginator.num_pages }}</span>
 
-    <span class="page-numbers" role="group" aria-label="Page numbers">
-      {% for i in page_range %}
-        {% if i == students.number %}
-        <span class="current-page-number" aria-current="page"><strong>{{ i }}</strong></span>
-        {% else %}
-          <a href="?page={{ i }}" aria-label="Go to page {{ i }}">{{ i }}</a>
-        {% endif %}
-      {% endfor %}
-    </span>
-
-    {% if students.has_next %}
-      <a href="?page={{ students.next_page_number }}" aria-label="Go to next page">Next</a>
-      <a href="?page={{ students.paginator.num_pages }}" aria-label="Go to last page">Last &raquo;</a>
-    {% endif %}
-  </span>
+  {% if students.has_next %}
+    <a class="next-btn" href="?page={{ students.next_page_number }}" aria-label="Go to next page">Next &rsaquo;</a>
+  {% else %}
+    <span class="ghost" aria-disabled="true">Next &rsaquo;</span>
+  {% endif %}
 </div>
 {% endif %}
 
