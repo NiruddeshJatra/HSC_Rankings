@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-07-27 — Restore committed staticfiles (broke prod static serving)
+
+- Previous entry's "untrack staticfiles/ build artifacts" was wrong: `vercel.json`
+  uses the legacy `builds` array with `@vercel/python`, which never runs
+  `collectstatic` and makes Vercel ignore any build command. WhiteNoise serves
+  `/static/...` from `STATIC_ROOT` (`staticfiles/`), so untracking it would have
+  shipped an empty directory and 404'd every static asset in production.
+- Removed `staticfiles/` from `.gitignore`, re-ran `collectstatic`, re-committed
+  the output. Documented the constraint in `CLAUDE.md` to prevent repeat.
+
 ## 2026-07-27 — Settings correctness fix, footer privacy cleanup, repo hygiene
 
 - Added `DISABLE_SERVER_SIDE_CURSORS = True` to settings.py — required for

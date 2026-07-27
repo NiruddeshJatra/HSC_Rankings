@@ -47,6 +47,12 @@ db_legacy.sqlite3        # gitignored backup only — never the active DB, never
   `request`. Only allowed as the `ALLOWED_HOSTS` fallback default.
 - Individual result pages: no father/mother name, no reg_no, no `Person` JSON-LD,
   and `noindex` — these are deliberate privacy exclusions, not oversights.
+- `vercel.json` uses the legacy `builds` array with `@vercel/python` — this never
+  runs `collectstatic` and makes Vercel ignore any Project Settings build command.
+  **`staticfiles/` (the collectstatic output WhiteNoise serves from) must stay
+  committed to git** — do not gitignore or untrack it, or every `/static/...`
+  request 404s in production. Regenerate with `python manage.py collectstatic
+  --noinput` after any static asset change and commit the result.
 
 ## Environment
 
