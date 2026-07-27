@@ -7,29 +7,24 @@
     <title>{% block title %} {% endblock %}</title>
     <meta
       name="description"
-      content="Check SSC, HSC Result 2025 Bangladesh - Board Exam Rankings, Merit List for Science, Commerce, Arts groups. SSC HSC results, board rankings, individual student results."
-    />
-    <meta 
-      name="keywords" 
-      content="HSC result 2025, Bangladesh board exam, SSC result 2025, SSC ranking, HSC ranking, merit list, Chittagong board, Dhaka board, science group ranking, commerce group ranking, arts group ranking, board exam results, SSC Chittagong, SSC Dhaka, HSC Chittagong, HSC Dhaka" 
+      content="Chittagong Board (BISE-CTG) SSC and HSC result rankings for Bangladesh - independently computed merit lists for Science, Commerce, and Arts groups."
     />
     <meta name="author" content="SSC, HSC Rankings Bangladesh" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="google-site-verification"     content="npRsPcwc1npjGdnGB1kwqHefFB5fYXbKest-KOM3wVQ" />
 
-    <link rel="canonical" href="{% block canonical_url %}https://boardexamrankings.vercel.app/{% endblock %}" />
+    <link rel="canonical" href="{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% if students.number and students.number > 1 %}?page={{ students.number }}{% endif %}{% endblock %}" />
 
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="{% block robots %}index, follow, max-snippet:-1, max-image-preview:large{% endblock %}" />
     <meta name="googlebot" content="index, follow" />
     <meta name="bingbot" content="index, follow" />
     <meta name="yandexbot" content="index, follow" />
-    <meta name="sitemap" content="https://boardexamrankings.vercel.app/sitemap.xml" />
 
     <meta property="og:title" content="{% block og_title %}SSC, HSC Result 2025 Bangladesh - Board Exam Rankings{% endblock %}" />
-    <meta property="og:description" content="{% block og_description %}Check latest SSC, HSC board exam results and rankings for Bangladesh. Find merit lists for Science, Commerce, and Arts groups from all education boards.{% endblock %}" />
-    <meta property="og:image" content="{% static 'screenshots/home.png' %}" />
+    <meta property="og:description" content="{% block og_description %}Check latest SSC, HSC Chittagong Board exam results and rankings for Bangladesh. Find merit lists for Science, Commerce, and Arts groups.{% endblock %}" />
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'screenshots/home.png' %}{% endblock %}" />
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="{% block og_url %}https://boardexamrankings.vercel.app/{% endblock %}" />
+    <meta property="og:url" content="{% block og_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% if students.number and students.number > 1 %}?page={{ students.number }}{% endif %}{% endblock %}" />
     <meta property="og:site_name" content="HSC Rankings Bangladesh" />
     <meta property="og:locale" content="en_US" />
 
@@ -37,15 +32,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="{% block twitter_title %}SSC, HSC Result 2025 Bangladesh - Board Exam Rankings{% endblock %}" />
     <meta name="twitter:description" content="{% block twitter_description %}Find SSC, HSC board exam rankings for Bangladesh. Check merit lists for Science, Commerce, Arts groups.{% endblock %}" />
-    <meta name="twitter:image" content="{% static 'screenshots/home.png' %}" />
+    <meta name="twitter:image" content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'screenshots/home.png' %}{% endblock %}" />
     <meta name="twitter:site" content="@SSCHSCRankingsBD" />
-
-    <!-- Additional SEO Meta Tags -->
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
-    <meta name="language" content="English" />
-    <meta name="revisit-after" content="1 days" />
-    <meta name="distribution" content="global" />
-    <meta name="rating" content="general" />
     <meta http-equiv="content-language" content="en-us" />
     
     <!-- Geo-targeting -->
@@ -75,9 +63,9 @@
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "EducationalOrganization",
+      "@type": "WebSite",
       "name": "SSC, HSC Rankings Bangladesh",
-      "url": "https://boardexamrankings.vercel.app/",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
       "description": "Comprehensive SSC, HSC board exam results and rankings for Bangladesh education boards including Science, Commerce, and Arts groups",
       "address": {
         "@type": "PostalAddress",
@@ -87,15 +75,6 @@
       "areaServed": {
         "@type": "Country",
         "name": "Bangladesh"
-      },
-      "sameAs": [
-        "https://www.facebook.com/SSCHSCRankingsBD",
-        "https://twitter.com/SSCHSCRankingsBD"
-      ],
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://boardexamrankings.vercel.app/?roll_no={search_term_string}",
-        "query-input": "required name=search_term_string"
       }
     }
   </script>
@@ -105,48 +84,39 @@
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "url": "https://boardexamrankings.vercel.app/",
+      "url": "{{ request.scheme }}://{{ request.get_host }}/",
       "name": "SSC, HSC Rankings Bangladesh",
       "description": "Find SSC, HSC board exam results and rankings for Bangladesh. Check merit lists, individual student results, and college rankings.",
       "publisher": {
         "@type": "Organization",
         "name": "SSC, HSC Rankings Bangladesh"
-      },
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "https://boardexamrankings.vercel.app/?roll_no={search_term_string}"
-        },
-        "query-input": "required name=search_term_string"
       }
     }
   </script>
   
   <body>
-    {% if not request.resolver_match or request.resolver_match.url_name != 'home' %}
     <!-- navigation bar -->
     <nav role="navigation" aria-label="Main navigation">
       <div class="group-btn" role="group" aria-label="Subject groups">
-        <a href="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group='science' %}" 
+        <a href="{% url 'rankings:results' exam=exam|default:'hsc' year=year|default:'2024' group='science' %}"
             aria-label="Science Group Rankings"
-            {% if request.resolver_match.kwargs.group|lower == 'science' and request.resolver_match.kwargs.exam_type|lower == 'hsc' %}aria-current="page"{% endif %}>
+            {% if request.resolver_match.kwargs.group|lower == 'science' %}aria-current="page"{% endif %}>
           Science
         </a>
-        <a href="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group='business_studies' %}" 
+        <a href="{% url 'rankings:results' exam=exam|default:'hsc' year=year|default:'2024' group='business_studies' %}"
             aria-label="Commerce Group Rankings"
-            {% if request.resolver_match.kwargs.group|lower == 'business_studies' and request.resolver_match.kwargs.exam_type|lower == 'hsc' %}aria-current="page"{% endif %}>
+            {% if request.resolver_match.kwargs.group|lower == 'business_studies' %}aria-current="page"{% endif %}>
           Commerce
         </a>
-        <a href="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group='humanities' %}" 
+        <a href="{% url 'rankings:results' exam=exam|default:'hsc' year=year|default:'2024' group='humanities' %}"
             aria-label="Arts Group Rankings"
-            {% if request.resolver_match.kwargs.group|lower == 'humanities' and request.resolver_match.kwargs.exam_type|lower == 'hsc' %}aria-current="page"{% endif %}>
+            {% if request.resolver_match.kwargs.group|lower == 'humanities' %}aria-current="page"{% endif %}>
           Arts
         </a>
       </div>
-      
+
       <div class="search-btn">
-        <form method="get" action="{% url 'rankings:results' exam_type=exam_type|default:'hsc' group=group|default:'science' %}" role="search" aria-label="Search student results">
+        <form method="get" action="{% url 'rankings:results' exam=exam|default:'hsc' year=year|default:'2024' group=group|default:'science' %}" role="search" aria-label="Search student results">
           <input type="text" 
                 id="roll-search"
                 name="roll_no" 
@@ -160,12 +130,10 @@
         {% endif %}
       </div>
     </nav>
-    {% endif %}
 
     <!-- Main Content -->
     <main class="main-content" role="main">{% block content %} {% endblock %}</main>
 
-    {% if not request.resolver_match or request.resolver_match.url_name != 'home' %}
     <!-- Footer -->
     <footer role="contentinfo">
       <div class="footer-content">
@@ -177,9 +145,15 @@
             <p>GitHub: <a href="https://github.com/NiruddeshJatra" target="_blank" rel="noopener">NiruddeshJatra</a></p>
           </address>
         </div>
+        <div class="footer-links">
+          <h3>Exam Sets</h3>
+          <p><a href="{% url 'rankings:results' exam='hsc' year='2024' group='science' %}">HSC 2024</a></p>
+          <p><a href="{% url 'rankings:results' exam='ssc' year='2025' group='science' %}">SSC 2025</a></p>
+          <p><a href="{% url 'rankings:results' exam='hsc' year='2025' group='science' %}">HSC 2025</a></p>
+          <p><a href="{% url 'rankings:methodology' %}">Methodology &amp; Disclaimer</a></p>
+        </div>
       </div>
     </footer>
-    {% endif %}
   </body>
   
   <!-- Vercel Web Analytics -->
