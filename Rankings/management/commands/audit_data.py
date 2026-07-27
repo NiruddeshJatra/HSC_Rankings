@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db.models import Avg, Max, Min
 
 from Rankings.models import Marks, StudentInfo
+from Rankings.subject_maxes import subject_max
 
 SUBJECT_FIELDS = [
   'bangla', 'english', 'math', 'physics', 'chemistry', 'biology',
@@ -33,7 +34,7 @@ class Command(BaseCommand):
     self.stdout.write(self.style.MIGRATE_HEADING(f'=== AUDIT: {exam_type} ==='))
     self.section_result_field(students)
     self.section_total_marks(students)
-    self.section_internal_consistency(students)
+    self.section_internal_consistency(students, exam_type)
     self.section_cross_check(students, exam_type)
 
   # 1. RESULT FIELD
@@ -106,29 +107,29 @@ class Command(BaseCommand):
           self.stdout.write(f'    {field}: {populated} students non-null/non-zero')
 
   # 3. INTERNAL CONSISTENCY
-  def section_internal_consistency(self, students):
+  def section_internal_consistency(self, students, exam_type):
     self.stdout.write('\n--- 3. INTERNAL CONSISTENCY ---')
     marks_qs = Marks.objects.filter(student__in=students).select_related('student')
 
     disagreements = []
-    over_100_count = 0
+    over_max_count = 0
     negative_count = 0
 
     for m in marks_qs:
       subject_sum = 0
-      has_over_100 = False
+      has_over_max = False
       has_negative = False
       for field in SUBJECT_FIELDS:
         value = getattr(m, field)
         if value is None:
           continue
         subject_sum += value
-        if value > 100:
-          has_over_100 = True
+        if value > subject_max(exam_type, field):
+          has_over_max = True
         if value < 0:
           has_negative = True
-      if has_over_100:
-        over_100_count += 1
+      if has_over_max:
+        over_max_count += 1
       if has_negative:
         negative_count += 1
       diff = m.total_marks - subject_sum
@@ -143,7 +144,7 @@ class Command(BaseCommand):
     for size, count in sorted(diff_sizes.items()):
       self.stdout.write(f'  {size}: {count}')
 
-    self.stdout.write(f'Rows with any individual subject mark > 100: {over_100_count}')
+    self.stdout.write(f'Rows with any individual subject mark exceeding its level max: {over_max_count}')
     self.stdout.write(f'Rows with any individual subject mark < 0: {negative_count}')
 
     self.stdout.write('10 example disagreements (full per-subject breakdown):')
