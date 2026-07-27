@@ -2,77 +2,29 @@
 {% load static %}
 
 {% block title %}
-  {% if exam_type == 'SSC' %}
-    {% if group == 'SCIENCE' %}
-      SSC Science Group Result 2025 Bangladesh - Merit List & Rankings
-    {% elif group == 'BUSINESS_STUDIES' %}
-      SSC Business Studies Group Result 2025 Bangladesh - Merit List & Rankings
-    {% elif group == 'HUMANITIES' %}
-      SSC Humanities Group Result 2025 Bangladesh - Merit List & Rankings
-    {% else %}
-      SSC Result 2025 Bangladesh - Board Exam Rankings All Groups
-    {% endif %}
-  {% else %}
-    {% if group == 'SCIENCE' %}
-      HSC Science Group Result 2024 Bangladesh - Merit List & Rankings
-    {% elif group == 'BUSINESS_STUDIES' %}
-      HSC Commerce Group Result 2024 Bangladesh - Merit List & Rankings  
-    {% elif group == 'HUMANITIES' %}
-      HSC Arts Group Result 2024 Bangladesh - Merit List & Rankings
-    {% else %}
-      HSC Result 2024 Bangladesh - Board Exam Rankings All Groups
-    {% endif %}
-  {% endif %}
+  {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}
+  {% if group == 'SCIENCE' %}Science Group
+  {% elif group == 'BUSINESS STUDIES' %}Commerce Group
+  {% elif group == 'HUMANITIES' %}Arts Group
+  {% else %}All Groups{% endif %}
+  Result Chittagong Board - Merit List &amp; Rankings
 {% endblock %}
 
 {% block meta_description %}
-  {% if exam_type == 'SSC' %}
-    {% if group == 'SCIENCE' %}
-      SSC Science Group Result 2025 Bangladesh - Check complete merit list, rankings, and individual results for Science students from all education boards.
-    {% elif group == 'BUSINESS_STUDIES' %}
-      SSC Business Studies Group Result 2025 Bangladesh - Find merit list, rankings, and individual results for Business Studies students from all boards.
-    {% elif group == 'HUMANITIES' %}
-      SSC Humanities Group Result 2025 Bangladesh - View complete merit list, rankings, and individual results for Humanities students from all education boards.
-    {% else %}
-      SSC Result 2025 Bangladesh - Complete board exam results, merit lists, and rankings for Science, Business Studies, Humanities groups from all education boards.
-    {% endif %}
-  {% else %}
-    {% if group == 'SCIENCE' %}
-      HSC Science Group Result 2024 Bangladesh - Check complete merit list, rankings, and individual results for Science students from all education boards.
-    {% elif group == 'BUSINESS_STUDIES' %}
-      HSC Commerce Group Result 2024 Bangladesh - Find merit list, rankings, and individual results for Business Studies students from all boards.
-    {% elif group == 'HUMANITIES' %}
-      HSC Arts Group Result 2024 Bangladesh - View complete merit list, rankings, and individual results for Humanities students from all education boards.
-    {% else %}
-      HSC Result 2024 Bangladesh - Complete board exam results, merit lists, and rankings for Science, Commerce, Arts groups from all education boards.
-    {% endif %}
-  {% endif %}
+  {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}
+  {% if group == 'SCIENCE' %}Science Group result Chittagong Board - check complete merit list, rankings, and individual results for Science students.
+  {% elif group == 'BUSINESS STUDIES' %}Commerce (Business Studies) Group result Chittagong Board - find merit list, rankings, and individual results for Business Studies students.
+  {% elif group == 'HUMANITIES' %}Arts (Humanities) Group result Chittagong Board - view complete merit list, rankings, and individual results for Humanities students.
+  {% else %}result Chittagong Board - complete exam results, merit lists, and rankings for Science, Commerce, Arts groups.{% endif %}
 {% endblock %}
 
-{% block canonical_url %}https://boardexamrankings.vercel.app/results/{% endblock %}
-
 {% block og_title %}
-  {% if exam_type == 'SSC' %}
-    {% if group == 'SCIENCE' %}
-      SSC Science Group Result 2025 Bangladesh - Merit List
-    {% elif group == 'BUSINESS_STUDIES' %}
-      SSC Business Studies Group Result 2025 Bangladesh - Merit List
-    {% elif group == 'HUMANITIES' %}
-      SSC Humanities Group Result 2025 Bangladesh - Merit List
-    {% else %}
-      SSC Result 2025 Bangladesh - All Groups Merit List
-    {% endif %}
-  {% else %}
-    {% if group == 'SCIENCE' %}
-      HSC Science Group Result 2024 Bangladesh - Merit List
-    {% elif group == 'BUSINESS_STUDIES' %}
-      HSC Commerce Group Result 2024 Bangladesh - Merit List
-    {% elif group == 'HUMANITIES' %}
-      HSC Arts Group Result 2024 Bangladesh - Merit List
-    {% else %}
-      HSC Result 2024 Bangladesh - All Groups Merit List
-    {% endif %}
-  {% endif %}
+  {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}
+  {% if group == 'SCIENCE' %}Science Group
+  {% elif group == 'BUSINESS STUDIES' %}Commerce Group
+  {% elif group == 'HUMANITIES' %}Arts Group
+  {% else %}All Groups{% endif %}
+  Result - Merit List
 {% endblock %}
 
 {% block og_description %}
@@ -95,13 +47,13 @@
   {
     "@context": "https://schema.org",
     "@type": "Dataset",
-    "name": "{{ exam_type|default:'HSC' }} {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}All Groups{% endif %} Result {% if exam_type == 'SSC' %}2025{% else %}2024{% endif %} Bangladesh",
-    "description": "Complete {{ exam_type|default:'HSC' }} board exam results and merit list for {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}all{% endif %} group students in Bangladesh",
-    "url": "https://boardexamrankings.vercel.app/results/",
+    "name": "{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}All Groups{% endif %} Result {{ year }} Chittagong Board",
+    "description": "{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} exam results and merit list for {% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}all{% endif %} group students, Chittagong Board",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ request.path }}",
     "keywords": [
-      "{{ exam_type|default:'HSC' }} result",
-      "Bangladesh",
-      "{% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS_STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}all groups{% endif %}",
+      "{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} result",
+      "Chittagong Board",
+      "{% if group == 'SCIENCE' %}Science{% elif group == 'BUSINESS STUDIES' %}Business Studies{% elif group == 'HUMANITIES' %}Humanities{% else %}all groups{% endif %}",
       "merit list",
       "board exam",
       "rankings"
@@ -110,19 +62,27 @@
       "@type": "Organization",
       "name": "HSC Rankings Bangladesh"
     },
-    "datePublished": "{% if exam_type == 'SSC' %}2025-07-01{% else %}2024-07-01{% endif %}",
-    "dateModified": "{% if exam_type == 'SSC' %}2025-07-01{% else %}2024-07-01{% endif %}",
-    "license": "https://creativecommons.org/licenses/by/4.0/"
+    "datePublished": "{{ year }}-07-01",
+    "dateModified": "{{ year }}-07-01"
   }
 </script>
 
 <div class="results-container">
-  <h1>{{ exam_type|default:'HSC' }} {{ group_db|default:group|lower|title }} Student Ranks</h1>
+  <h1>{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} {{ group|lower|title }} Student Ranks</h1>
 
-  <table role="table" aria-label="{{ exam_type|default:'HSC' }} Results Merit List">
+  {% if not rankings_published %}
+  <p>
+    {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} results are still being
+    collected. Rankings will publish once the full dataset is in. You can look up an
+    individual roll number now using the search box above.
+  </p>
+  {% else %}
+  <p>Ranks are computed by this site from total marks — see <a href="{% url 'rankings:methodology' %}">Methodology</a>.</p>
+
+  <table role="table" aria-label="{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} Results Merit List">
     <thead>
       <tr>
-        <th scope="col">Merit Position</th>
+        <th scope="col">Rank</th>
         <th scope="col">Roll Number</th>
         <th scope="col">Student Name</th>
         <th scope="col">Total Marks</th>
@@ -136,7 +96,7 @@
         <td><strong>{{ student.rank }}</strong></td>
         <td class="individual-link">
           <a
-            href="{% url 'rankings:individual' exam_type=exam_type|lower roll_no=student.roll_no %}"
+            href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}"
             aria-label="View {{ student.name }}'s detailed results"
             itemprop="identifier"
           >
@@ -145,7 +105,7 @@
         </td>
         <td class="individual-link">
           <a
-            href="{% url 'rankings:individual' exam_type=exam_type|lower roll_no=student.roll_no %}"
+            href="{% url 'rankings:individual' exam=exam year=year roll_no=student.roll_no %}"
             aria-label="View {{ student.name }}'s detailed results"
             itemprop="name"
             class="student-name"
@@ -167,8 +127,10 @@
       {% endfor %}
     </tbody>
   </table>
+  {% endif %}
 </div>
 
+{% if rankings_published %}
 <!-- Pagination for more results -->
 <div aria-label="Results pagination" class="pagination">
   <span class="step-links">
@@ -197,5 +159,6 @@
     {% endif %}
   </span>
 </div>
+{% endif %}
 
 {% endblock %}
