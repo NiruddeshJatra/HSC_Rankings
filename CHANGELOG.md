@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-07-27 — Forest / "Graph Khata" visual redesign, brand assets
+
+- New site-wide dark theme (Marcellus + Alegreya Sans + Kalam fonts, forest-green
+  palette with mauve/amber/copper accents), consolidated into a single
+  `static/css/site.css` — deleted the old per-page `global.css`/`home.css`/
+  `individual_result.css`.
+- Added favicon set, logo, and OG share image (`static/favicon/`,
+  `static/images/logo-*`, `static/images/og-base-1200x630.png`) from the design
+  project; base.html now links real favicons instead of a missing `logo.ico`.
+- `Rankings.context_processors.exam_sets` now returns every exam set (published
+  and collecting) instead of published-only, so header nav, footer, and the home
+  "All rankings" index share one data source — home's collecting-state pill and
+  the footer's pulsing "collecting" indicator both come from this.
+- Ranking table now ships real duplicate markup for desktop (table) and mobile
+  (card-grid), toggled by CSS breakpoint rather than squeezing one table — top-3
+  rows highlighted by `student.rank <= 3`, not page position.
+- Individual result page: subject marks now show progress bars against public
+  BD board syllabus max-marks (`SUBJECT_MAX_MARKS` in `views.py`); share row
+  replaced raster Twitter/Instagram/Telegram icons with inline SVG
+  WhatsApp/Facebook + a copy-link button (`static/js/site.js`).
+- New `roll_not_found.html` — a valid exam/year with no matching roll number now
+  gets a dedicated "no result for roll X" page (still 404 status) instead of the
+  generic not-found page.
+- Zero `style=""` attributes anywhere: per-row animation delay and progress-bar
+  width are expressed as CSS classes (`stagger-N`, `substagger-N`, `bar-N`) via
+  new filters in `Rankings/templatetags/marks_extras.py`.
+- Repo hygiene: untracked all `__pycache__/*.pyc` (already gitignored but
+  previously committed), removed stray design-source files accidentally left in
+  the repo root.
+
 ## 2026-07-27 — Restore committed staticfiles (broke prod static serving)
 
 - Previous entry's "untrack staticfiles/ build artifacts" was wrong: `vercel.json`

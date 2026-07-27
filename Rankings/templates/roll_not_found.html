@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}Roll {{ roll_no }} not found - Board Exam Rankings{% endblock %}
+{% block robots %}noindex, follow{% endblock %}
+
+{% block content %}
+<div class="state-container">
+  <div class="state-kicker">Roll not found</div>
+  <div class="card state-card fade-up stagger-0">
+    <h1>No result for roll <span class="roll-highlight tabular">{{ roll_no }}</span></h1>
+    <p>Nothing matches that roll in {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}, Chittagong Board. Check the digits, or the roll may not have been retrieved from the board portal yet — coverage can be incomplete while collection runs.</p>
+    <form method="get" action="{% url 'rankings:results' exam=exam year=year group='science' %}" role="search" aria-label="Search student results" class="joined-form">
+      <input type="text" inputmode="numeric" name="roll_no" placeholder="Try another roll" aria-label="Roll number" required>
+      <button type="submit">Search</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

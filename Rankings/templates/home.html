@@ -12,65 +12,63 @@
 {% block twitter_description %}Chittagong Board (BISE-CTG) SSC and HSC result rankings - independently computed merit lists for Science, Commerce, and Arts groups, HSC 2024, HSC 2025, and SSC 2025.{% endblock %}
 
 {% block content %}
-<div class="homepage-choice-container">
-  <h1>Chittagong Board SSC &amp; HSC Result Rankings</h1>
-  <p>Please select which exam results you want to view:</p>
-  <div class="exam-choice-buttons">
-    <a href="{% url 'rankings:results' exam='hsc' year='2024' group='science' %}" class="exam-btn hsc-btn" aria-label="View HSC 2024 Results">
-      HSC 2024 Results
-    </a>
-    <a href="{% url 'rankings:results' exam='ssc' year='2025' group='science' %}" class="exam-btn ssc-btn" aria-label="View SSC 2025 Results">
-      SSC 2025 Results
-    </a>
-    <a href="{% url 'rankings:results' exam='hsc' year='2025' group='science' %}" class="exam-btn hsc-btn" aria-label="View HSC 2025 Results">
-      HSC 2025 Results
-    </a>
+<div class="home-container">
+  <div class="home-hero fade-up stagger-0">
+    <h1>Chittagong Board <span class="accent-science">SSC &amp; HSC</span> Result Rankings</h1>
+    <svg aria-hidden="true" viewBox="0 0 48 34" class="cap">
+      <polygon points="24,2 46,12 24,22 2,12" fill="#8FBF6F"></polygon>
+      <path d="M14 16.5 L14 25 C14 28.5 34 28.5 34 25 L34 16.5" fill="none" stroke="#5F8A48" stroke-width="3"></path>
+      <path d="M41 14.5 L41 23" stroke="#E5B45C" stroke-width="2" stroke-linecap="round"></path>
+      <circle cx="41" cy="25.5" r="2.4" fill="#E5B45C"></circle>
+    </svg>
   </div>
-</div>
 
-<div class="homepage-info">
-  <p>
-    This site publishes Chittagong Board (BISE-CTG) SSC and HSC exam result rankings for
-    Bangladesh. It covers the Chittagong board only — it does not cover Dhaka or any other
-    education board. Results are collected from the board's public result portal, and the
-    board's own published result is always authoritative if there is ever a discrepancy.
+  <svg viewBox="0 0 560 90" class="home-sparkline fade-up stagger-1" aria-hidden="true">
+    <path d="M8 84 L8 6 M8 84 L552 84" stroke="#2D4033" stroke-width="1.5" fill="none"></path>
+    <polyline points="8,74 70,68 132,70 194,58 256,52 318,42 380,44 442,28 504,22 552,12" fill="none" stroke="#8FBF6F" stroke-width="2.5" stroke-dasharray="700" class="sparkline-draw"></polyline>
+    <circle cx="442" cy="28" r="4" fill="#E5B45C"></circle>
+    <circle cx="552" cy="12" r="4" fill="#B6DB93"></circle>
+    <text x="16" y="18" fill="#5C6A5E" font-size="11">total marks &rarr;</text>
+  </svg>
+
+  <p class="fade-up stagger-2">
+    Merit lists for the Chittagong education board (BISE-CTG), computed independently
+    from each student's total marks. Look up any roll number for full subject-wise
+    marks, or browse the ranked list for every exam set and group.
   </p>
-  <p>
-    The education boards themselves do not publish merit positions. The ranks shown here are
-    computed independently by this site, from each student's total marks across all subjects,
-    for every group: Science, Commerce (Business Studies), and Arts (Humanities). Students who
-    score the same total marks share the same rank. Because ranks are computed only from roll
-    numbers that were successfully retrieved from the board's portal, coverage for any given
-    exam set may be incomplete. See the <a href="{% url 'rankings:methodology' %}">Methodology</a>
-    page for full details on how this works, what data is stored, and how to request removal of
-    your information.
+  <p class="prose-muted fade-up stagger-3">
+    The boards publish results but not merit positions — ranks here are computed by
+    this site from total marks; equal totals share a rank. Coverage may be incomplete,
+    and the board's own result is always authoritative. Chittagong board only. See
+    <a href="{% url 'rankings:methodology' %}">Methodology</a>.
   </p>
-  <p>
-    Three exam sets are currently available: HSC 2024, HSC 2025, and SSC 2025. Each is broken
-    down into three group rankings. Use the links below to jump directly to any group and exam
-    set, or search by roll number from any results page once you're viewing a group.
-  </p>
+
+  <div class="home-divider fade-up stagger-4" aria-hidden="true">
+    <span></span>
+    <svg viewBox="0 0 44 30" class="book-stack">
+      <rect x="5" y="21" width="34" height="6.5" rx="1.5" fill="#8FBF6F"></rect>
+      <rect x="9" y="13" width="27" height="6.5" rx="1.5" fill="#E5B45C" transform="rotate(-3 22 16)"></rect>
+      <rect x="10" y="5" width="22" height="6.5" rx="1.5" fill="#D9945C" transform="rotate(2 21 8)"></rect>
+    </svg>
+    <span></span>
+  </div>
 
   <h2>All rankings</h2>
-  <ul>
+  <ul class="home-exam-index">
+    {% for ex in exam_sets %}
     <li>
-      HSC 2024:
-      <a href="{% url 'rankings:results' exam='hsc' year='2024' group='science' %}">Science</a>,
-      <a href="{% url 'rankings:results' exam='hsc' year='2024' group='business_studies' %}">Commerce</a>,
-      <a href="{% url 'rankings:results' exam='hsc' year='2024' group='humanities' %}">Arts</a>
+      <span class="home-exam-label">{{ ex.exam|upper }} {{ ex.year }}</span>
+      {% if ex.published %}
+      <span class="home-exam-groups">
+        <a class="group-science" href="{% url 'rankings:results' exam=ex.exam year=ex.year group='science' %}">Science</a>
+        <a class="group-commerce" href="{% url 'rankings:results' exam=ex.exam year=ex.year group='business_studies' %}">Commerce</a>
+        <a class="group-arts" href="{% url 'rankings:results' exam=ex.exam year=ex.year group='humanities' %}">Arts</a>
+      </span>
+      {% else %}
+      <span class="home-exam-collecting">collecting — <a href="#roll-search">roll lookup</a></span>
+      {% endif %}
     </li>
-    <li>
-      HSC 2025:
-      <a href="{% url 'rankings:results' exam='hsc' year='2025' group='science' %}">Science</a>,
-      <a href="{% url 'rankings:results' exam='hsc' year='2025' group='business_studies' %}">Commerce</a>,
-      <a href="{% url 'rankings:results' exam='hsc' year='2025' group='humanities' %}">Arts</a>
-    </li>
-    <li>
-      SSC 2025:
-      <a href="{% url 'rankings:results' exam='ssc' year='2025' group='science' %}">Science</a>,
-      <a href="{% url 'rankings:results' exam='ssc' year='2025' group='business_studies' %}">Commerce</a>,
-      <a href="{% url 'rankings:results' exam='ssc' year='2025' group='humanities' %}">Arts</a>
-    </li>
+    {% endfor %}
   </ul>
 </div>
 
@@ -80,94 +78,8 @@
   "@type": "Organization",
   "name": "Bangladesh Board Exam Rankings",
   "url": "{{ request.scheme }}://{{ request.get_host }}/",
-  "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'screenshots/home.png' %}",
+  "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'images/logo-960x240.png' %}",
   "description": "Chittagong board SSC and HSC exam results, merit lists, and student rankings, independently computed from total marks."
 }
 </script>
-<style>
-
-.homepage-choice-container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  padding: 24px 8px;
-}
-.homepage-choice-container h1 {
-  font-size: 2.2rem;
-  font-weight: 700;
-  margin-bottom: 18px;
-}
-.homepage-choice-container p {
-  font-size: 1.15rem;
-  margin-bottom: 28px;
-}
-.exam-choice-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 60px;
-  margin-top: 40px;
-}
-.exam-btn {
-  display: inline-block;
-  padding: 32px 40px;
-  border-radius: 16px;
-  background: #ffeeee;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-  text-decoration: none;
-  color: #3a3131;
-  font-size: 1.5rem;
-  font-weight: 700;
-  border: 2px solid transparent;
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
-  min-width: 200px;
-  letter-spacing: 0.02em;
-}
-.exam-btn:hover, .exam-btn:focus {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.16);
-  transform: translateY(-4px) scale(1.04);
-  outline: none;
-}
-
-@media (max-width: 700px) {
-  .exam-choice-buttons {
-    flex-direction: column;
-    gap: 24px;
-    width: 100%;
-    align-items: center;
-  }
-  .exam-btn {
-    width: 100%;
-    max-width: 320px;
-    font-size: 1.15rem;
-    padding: 22px 0;
-  }
-  .homepage-choice-container {
-    padding: 16px 2vw;
-  }
-  .homepage-choice-container h1 {
-    font-size: 1.4rem;
-  }
-  .homepage-choice-container p {
-    font-size: 1rem;
-  }
-}
-
-@media (max-width: 400px) {
-  .exam-btn {
-    font-size: 0.8rem;
-    padding: 16px 0;
-    min-width: 120px;
-  }
-  .homepage-choice-container h1 {
-    font-size: 1.1rem;
-  }
-  .homepage-choice-container p {
-    font-size: 0.95rem;
-  }
-}
-</style>
 {% endblock %}
