@@ -106,9 +106,20 @@
       </div>
     </div>
 
-    <!-- Shareable result card (screenshot target) -->
-    <p class="share-label fade-up stagger-6">Share your result — this card is what gets sent or screenshotted:</p>
-    <div class="card share-card fade-up stagger-7" id="share-card">
+    <!-- Shareable result card (rendered to a downloadable PNG on click) -->
+    <p class="share-card-caption fade-up stagger-6">Tap the card or Share to save it as an image you can send.</p>
+    <div class="card share-card fade-up stagger-7" id="share-card"
+         data-exam="{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} · {{ student.group|title }}"
+         data-name="{{ student.name }}"
+         data-roll="{{ student.roll_no }}"
+         data-institute="{{ student.institute }}"
+         data-gpa="{{ student.gpa }}"
+         data-marks="{{ marks.total_marks }}"
+         data-total-max="{{ total_max }}"
+         data-result="{{ student.result }}"
+         data-percentile="{% if percentile %}Top {{ percentile.top_pct }}% of group · rank {{ percentile.rank }} of {{ percentile.total }}{% endif %}"
+         data-institution-rank="{% if institution_rank %}Institution rank {{ institution_rank.rank }} of {{ institution_rank.total }}{% endif %}"
+         data-host="{{ request.get_host }}">
       <div class="share-card-top">
         <span class="share-card-exam">{% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }} &middot; {{ student.group|title }}</span>
       </div>
@@ -143,24 +154,185 @@
               data-share-url="{{ request.build_absolute_uri }}"
               data-share-text="{{ student.name }} &middot; GPA {{ student.gpa }} &middot; rank {{ student.rank|default:'N/A' }} in {% if exam == 'ssc' %}SSC{% else %}HSC{% endif %} {{ year }}">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.6" y1="10.6" x2="15.4" y2="6.4"></line><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"></line></svg>
-        <span data-share-label>Share</span>
+        <span data-share-label>Save image</span>
       </button>
     </div>
     <script>
       (function () {
+        var card = document.getElementById('share-card');
         var btn = document.getElementById('share-card-btn');
         var label = btn.querySelector('[data-share-label]');
-        var url = btn.getAttribute('data-share-url');
-        btn.addEventListener('click', function () {
-          if (navigator.share) {
-            navigator.share({ text: btn.getAttribute('data-share-text'), url: url }).catch(function () {});
-            return;
+        var busy = false;
+
+        function cssVar(name, fallback) {
+          var v = getComputedStyle(document.documentElement).getPropertyValue(name);
+          return v ? v.trim() : fallback;
+        }
+
+        function roundRect(ctx, x, y, w, h, r) {
+          ctx.beginPath();
+          ctx.moveTo(x + r, y);
+          ctx.arcTo(x + w, y, x + w, y + h, r);
+          ctx.arcTo(x + w, y + h, x, y + h, r);
+          ctx.arcTo(x, y + h, x, y, r);
+          ctx.arcTo(x, y, x + w, y, r);
+          ctx.closePath();
+        }
+
+        function wrapText(ctx, text, maxWidth) {
+          var words = String(text).split(' ');
+          var lines = [];
+          var line = '';
+          for (var i = 0; i < words.length; i++) {
+            var test = line ? line + ' ' + words[i] : words[i];
+            if (line && ctx.measureText(test).width > maxWidth) {
+              lines.push(line);
+              line = words[i];
+            } else {
+              line = test;
+            }
           }
-          if (!navigator.clipboard || !navigator.clipboard.writeText) return;
-          navigator.clipboard.writeText(url).catch(function () {});
-          label.textContent = 'Copied';
-          setTimeout(function () { label.textContent = 'Share'; }, 1600);
+          if (line) lines.push(line);
+          return lines;
+        }
+
+        var theme = {
+          ground: cssVar('--ground-deep', '#080B09'),
+          leafBright: cssVar('--leaf-bright', '#B6DB93'),
+          inkBright: cssVar('--ink-bright', '#F0F5EC'),
+          inkDim: cssVar('--ink-dim', '#8FA093'),
+          inkMid: cssVar('--ink-mid', '#A5B2A6'),
+          inkFaint: cssVar('--ink-faint', '#5C6A5E'),
+          amber: cssVar('--amber', '#E5B45C'),
+          copper: cssVar('--copper', '#D9945C'),
+          fontDisplay: "'Marcellus', serif",
+          fontBody: "'Alegreya Sans', sans-serif"
+        };
+
+        // Draws the card onto ctx (width w, logical/unscaled units) and
+        // returns the total height used. Called twice: once at a generous
+        // height to measure, once at the final trimmed size to render.
+        function drawCard(ctx, w) {
+          var pad = 22;
+          var y = pad + 12;
+
+          roundRect(ctx, 0, 0, w, 2000, 0);
+          ctx.fillStyle = theme.ground;
+          ctx.fill();
+
+          ctx.fillStyle = theme.amber;
+          ctx.font = '700 11px ' + theme.fontBody;
+          ctx.fillText((card.dataset.exam || '').toUpperCase(), pad, y);
+          y += 30;
+
+          ctx.fillStyle = theme.inkBright;
+          ctx.font = '400 26px ' + theme.fontDisplay;
+          ctx.fillText(card.dataset.name || '', pad, y);
+          y += 24;
+
+          ctx.fillStyle = theme.inkDim;
+          ctx.font = '400 13px ' + theme.fontBody;
+          var meta = 'Roll ' + card.dataset.roll + ' · ' + card.dataset.institute;
+          wrapText(ctx, meta, w - pad * 2).forEach(function (line) {
+            ctx.fillText(line, pad, y);
+            y += 18;
+          });
+          y += 16;
+
+          function statRow(labelText, value, color) {
+            ctx.fillStyle = theme.inkDim;
+            ctx.font = '700 10px ' + theme.fontBody;
+            ctx.fillText(labelText.toUpperCase(), pad, y);
+            ctx.fillStyle = color;
+            ctx.font = '400 20px ' + theme.fontDisplay;
+            ctx.fillText(value, pad + 90, y + 1);
+            y += 30;
+          }
+          statRow('GPA', card.dataset.gpa || '', theme.amber);
+          statRow('Marks', (card.dataset.marks || '') + ' / ' + (card.dataset.totalMax || ''), theme.inkBright);
+          if (card.dataset.result) {
+            var resultColor = card.dataset.result === 'PASS' ? theme.leafBright
+              : card.dataset.result === 'FAIL' ? theme.copper : theme.inkBright;
+            statRow('Result', card.dataset.result, resultColor);
+          }
+          y += 10;
+
+          ctx.fillStyle = theme.inkMid;
+          ctx.font = '400 12.5px ' + theme.fontBody;
+          if (card.dataset.percentile) { ctx.fillText(card.dataset.percentile, pad, y); y += 20; }
+          if (card.dataset.institutionRank) { ctx.fillText(card.dataset.institutionRank, pad, y); y += 20; }
+          y += 6;
+
+          ctx.fillStyle = theme.inkFaint;
+          ctx.font = '400 10.5px ' + theme.fontBody;
+          ctx.fillText(card.dataset.host || '', pad, y);
+
+          return y + pad;
+        }
+
+        function buildCanvas() {
+          var w = 360;
+          var scale = 2;
+
+          var scratch = document.createElement('canvas');
+          scratch.width = w * scale;
+          scratch.height = 2000 * scale;
+          var scratchCtx = scratch.getContext('2d');
+          scratchCtx.scale(scale, scale);
+          var finalHeight = drawCard(scratchCtx, w);
+
+          var canvas = document.createElement('canvas');
+          canvas.width = w * scale;
+          canvas.height = finalHeight * scale;
+          var ctx = canvas.getContext('2d');
+          ctx.scale(scale, scale);
+          drawCard(ctx, w);
+          return canvas;
+        }
+
+        function handleSave() {
+          if (busy) return;
+          busy = true;
+          var original = label.textContent;
+          label.textContent = 'Preparing…';
+
+          var ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+          ready.then(function () {
+            var canvas = buildCanvas();
+            canvas.toBlob(function (blob) {
+              busy = false;
+              if (!blob) { label.textContent = original; return; }
+              var fileName = 'result-' + (card.dataset.roll || 'card') + '.png';
+              var file = new File([blob], fileName, { type: 'image/png' });
+
+              if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], text: btn.getAttribute('data-share-text') })
+                  .catch(function () {})
+                  .then(function () { label.textContent = original; });
+                return;
+              }
+
+              var a = document.createElement('a');
+              a.href = URL.createObjectURL(blob);
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              label.textContent = 'Saved';
+              setTimeout(function () { label.textContent = original; }, 1600);
+            }, 'image/png');
+          });
+        }
+
+        card.style.cursor = 'pointer';
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('aria-label', 'Save this result card as an image');
+        card.addEventListener('click', handleSave);
+        card.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSave(); }
         });
+        btn.addEventListener('click', handleSave);
       })();
     </script>
 
