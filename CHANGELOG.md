@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-08-01 — Offline rehearsal mode for the scrape workflow
+
+- `scrape_results --fixture-dir <dir>` reads each roll from `<dir>/<roll>.html`
+  instead of issuing HTTP requests. Parsing, the roll assertion, the GPA range
+  check, unknown-subject-code detection and the digest all run unchanged — the
+  post-fetch pipeline moved into a `handle_html()` both paths call, so there is
+  no second code path to drift. `--base-url` is now required only when
+  `--fixture-dir` is absent.
+- New `.github/fixtures/`: 20 SSC result pages, rolls 300001–300020, so the
+  workflow can be rehearsed when the board's endpoint is unavailable — which is
+  most of the year, and possibly on the morning it matters. Roll 300018 has no
+  result status or GPA and roll 300019 carries an unmapped subject code, so a
+  rehearsal proves the warning path fires; roll 300020 is a genuine FAIL that
+  must *not* be flagged.
+- Fixtures are **synthetic**. A real result page carries the student's name,
+  father's name, mother's name and registration number — the exact fields
+  individual result pages refuse to publish — so committing 20 real pages would
+  leak in git history what the site declines to serve. The DOM is copied from
+  the real page; the parser cannot tell the difference.
+- New `fixture_mode` input on `scrape.yml`. It passes `--fixture-dir`, drops the
+  `base_url` requirement, and **refuses to run with `mode=full`**: storing
+  invented students in the real exam set is precisely what it must never do.
+
 ## 2026-08-01 — Remote result-day scraping via GitHub Actions, pre-flight hardening
 
 - New `.github/workflows/scrape.yml` (`workflow_dispatch` only): runs the

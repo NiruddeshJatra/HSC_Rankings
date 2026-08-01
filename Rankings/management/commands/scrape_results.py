@@ -1,4 +1,5 @@
 import itertools
+import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -180,10 +181,16 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--exam', required=True, choices=['hsc', 'ssc'], help='Exam type')
         parser.add_argument('--year', required=True, help='4-digit exam year, e.g. 2026')
-        parser.add_argument('--base-url', required=True,
+        parser.add_argument('--base-url', default=None,
                              help="Base individual-result URL for this year's board site, "
                                   "e.g. https://hscresult.bise-ctg.gov.bd/h_x_y_ctg26/individual "
-                                  "(no default - the board changes this path every year)")
+                                  "(no default - the board changes this path every year). "
+                                  "Required unless --fixture-dir is given.")
+        parser.add_argument('--fixture-dir', type=str, default=None,
+                             help='Read each roll from <dir>/<roll>.html instead of issuing HTTP '
+                                  'requests. Everything downstream is unchanged. Exists so the '
+                                  'workflow can be rehearsed when the board endpoint is down or '
+                                  'has not published yet.')
         parser.add_argument('--roll-start', type=int, required=True)
         parser.add_argument('--roll-end', type=int, default=None,
                              help='Optional. If omitted, requires --limit and stops once --limit rolls are parsed.')
@@ -213,7 +220,13 @@ class Command(BaseCommand):
             raise CommandError("Either --roll-end or --limit must be provided.")
 
         print_only = options['print_only']
-        base_url = options['base_url'].rstrip('/')
+        fixture_dir = options['fixture_dir']
+        if fixture_dir:
+            if not os.path.isdir(fixture_dir):
+                raise CommandError(f"--fixture-dir {fixture_dir!r} is not a directory")
+        elif not options['base_url']:
+            raise CommandError("--base-url is required unless --fixture-dir is given.")
+        base_url = (options['base_url'] or '').rstrip('/')
         workers = min(max(options['workers'], 1), 10)
         exam_type = f"{exam.upper()}_{year}"
         misses_file = options['misses_file'] or f"misses_{exam}_{year}.txt"
@@ -227,6 +240,9 @@ class Command(BaseCommand):
                     f"Refusing to scrape into {exam_type}: its rankings are already published. "
                     f"Check --exam/--year. Pass --force only if you really mean to overwrite a live exam set."
                 )
+
+        if fixture_dir:
+            self.stdout.write(f"Fixture mode: reading {fixture_dir}/<roll>.html, no HTTP requests.")
 
         result_url = f"{base_url}/{RESULT_ENDPOINT[exam]}"
         parse = PARSERS[exam]
@@ -250,10 +266,11 @@ class Command(BaseCommand):
             "Referer": f"{base_url}/index.php",
             "Content-Type": "application/x-www-form-urlencoded",
         }
-        try:
-            session.get(f"{base_url}/index.php", headers=headers, timeout=10)
-        except requests.exceptions.RequestException:
-            pass  # cookie warm-up is best-effort
+        if not fixture_dir:
+            try:
+                session.get(f"{base_url}/index.php", headers=headers, timeout=10)
+            except requests.exceptions.RequestException:
+                pass  # cookie warm-up is best-effort
 
         lock = threading.Lock()
         stats = {'processed': 0, 'saved': 0, 'missing': 0, 'failed': 0}
@@ -266,36 +283,12 @@ class Command(BaseCommand):
         first_unknown_html = {}   # code -> raw HTML of the first record it appeared in
         start_time = time.monotonic()
 
-        def fetch_one(roll):
-            if abort.is_set() or limit_reached.is_set():
-                return 'skipped', roll, None
+        def handle_html(roll, response_text):
+            """Parse, validate and store one result page.
 
-            data = {"roll": str(roll), "button2": "Submit"}
-            backoff = INITIAL_BACKOFF
-            response_text = None
-            for attempt in range(MAX_RETRIES + 1):
-                try:
-                    resp = session.post(result_url, data=data, headers=headers, timeout=15)
-                except requests.exceptions.RequestException:
-                    if attempt >= MAX_RETRIES:
-                        return 'failed', roll, None
-                    time.sleep(backoff)
-                    backoff *= 2
-                    continue
-
-                if resp.status_code == 429 or resp.status_code >= 500:
-                    if attempt >= MAX_RETRIES:
-                        return 'failed', roll, None
-                    time.sleep(backoff)
-                    backoff *= 2
-                    continue
-
-                response_text = resp.text
-                break
-
-            if response_text is None:
-                return 'failed', roll, None
-
+            Everything from here down is identical whether the HTML came off the
+            board's server or off disk in fixture mode.
+            """
             try:
                 parsed = parse(response_text, roll, subject_map)
             except ParserDrift as exc:
@@ -353,6 +346,48 @@ class Command(BaseCommand):
                 defaults={**parsed['marks_data'], 'total_marks': total_marks},
             )
             return 'saved', roll, (parsed, total_marks, unknown_html)
+
+        def fetch_one(roll):
+            if abort.is_set() or limit_reached.is_set():
+                return 'skipped', roll, None
+
+            if fixture_dir:
+                # A fixture that isn't on disk is the same situation as a roll the
+                # board has no result for.
+                try:
+                    with open(os.path.join(fixture_dir, f"{roll}.html"), encoding='utf-8') as fh:
+                        response_text = fh.read()
+                except FileNotFoundError:
+                    return 'missing', roll, None
+                return handle_html(roll, response_text)
+
+            data = {"roll": str(roll), "button2": "Submit"}
+            backoff = INITIAL_BACKOFF
+            response_text = None
+            for attempt in range(MAX_RETRIES + 1):
+                try:
+                    resp = session.post(result_url, data=data, headers=headers, timeout=15)
+                except requests.exceptions.RequestException:
+                    if attempt >= MAX_RETRIES:
+                        return 'failed', roll, None
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
+
+                if resp.status_code == 429 or resp.status_code >= 500:
+                    if attempt >= MAX_RETRIES:
+                        return 'failed', roll, None
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
+
+                response_text = resp.text
+                break
+
+            if response_text is None:
+                return 'failed', roll, None
+
+            return handle_html(roll, response_text)
 
         def next_chunk(chunk_size):
             chunk = []
