@@ -7,7 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from django.core.management.base import BaseCommand, CommandError
 
-from Rankings.models import StudentInfo, Marks
+from Rankings.models import ExamSet, StudentInfo, Marks
 from Rankings.subject_maps import get_subject_map
 
 RESULT_ENDPOINT = {'hsc': 'result_mark_details.php', 'ssc': 'result.php'}
@@ -192,6 +192,9 @@ class Command(BaseCommand):
         parser.add_argument('--misses-file', type=str, default=None, help='Path to write failed/missing roll numbers (default misses_<exam>_<year>.txt)')
         parser.add_argument('--limit', type=int, default=None, help='Stop after N successfully parsed rolls')
         parser.add_argument('--print-only', action='store_true', help='Parse and print each record; write nothing to the DB')
+        parser.add_argument('--force', action='store_true',
+                             help='Allow scraping into an exam set whose rankings are already published '
+                                  '(refused by default, so a mistyped --year cannot overwrite a live set)')
 
     def handle(self, *args, **options):
         exam = options['exam'].lower()
@@ -214,6 +217,17 @@ class Command(BaseCommand):
         workers = min(max(options['workers'], 1), 10)
         exam_type = f"{exam.upper()}_{year}"
         misses_file = options['misses_file'] or f"misses_{exam}_{year}.txt"
+
+        # Guard against a mistyped --year writing over a live exam set. --print-only
+        # is exempt: it never touches the DB, so it stays usable as a pre-flight
+        # check against an already-published set.
+        if not print_only and not options['force']:
+            if ExamSet.objects.filter(exam_type=exam_type, rankings_published=True).exists():
+                raise CommandError(
+                    f"Refusing to scrape into {exam_type}: its rankings are already published. "
+                    f"Check --exam/--year. Pass --force only if you really mean to overwrite a live exam set."
+                )
+
         result_url = f"{base_url}/{RESULT_ENDPOINT[exam]}"
         parse = PARSERS[exam]
         roll_start = options['roll_start']
@@ -249,6 +263,7 @@ class Command(BaseCommand):
         limit_reached = threading.Event()
         first_failure_html = {}
         unknown_code_counts = {}  # code -> [count, sample_text]
+        first_unknown_html = {}   # code -> raw HTML of the first record it appeared in
         start_time = time.monotonic()
 
         def fetch_one(roll):
@@ -303,9 +318,12 @@ class Command(BaseCommand):
                 return 'drift', roll, None
 
             total_marks = sum(parsed['marks_data'].values())
+            # Only carry the page body back when it contains an unmapped subject
+            # code - that is the one case the abort path needs to show raw HTML for.
+            unknown_html = response_text if parsed['unknown_codes'] else None
 
             if print_only:
-                return 'printed', roll, (parsed, total_marks)
+                return 'printed', roll, (parsed, total_marks, unknown_html)
 
             student_info, _ = StudentInfo.objects.get_or_create(
                 roll_no=parsed['roll_no'],
@@ -334,7 +352,7 @@ class Command(BaseCommand):
                 student=student_info,
                 defaults={**parsed['marks_data'], 'total_marks': total_marks},
             )
-            return 'saved', roll, (parsed, total_marks)
+            return 'saved', roll, (parsed, total_marks, unknown_html)
 
         def next_chunk(chunk_size):
             chunk = []
@@ -378,11 +396,13 @@ class Command(BaseCommand):
                             stats['saved'] += 1
                             consecutive_failures = 0
                             successes += 1
-                            parsed, total_marks = payload
+                            parsed, total_marks, unknown_html = payload
 
                             for code, sample_text in parsed['unknown_codes'].items():
                                 entry = unknown_code_counts.setdefault(code, [0, sample_text])
                                 entry[0] += 1
+                                if unknown_html is not None:
+                                    first_unknown_html.setdefault(code, unknown_html)
 
                             if print_only:
                                 print_record(self.stdout, roll, parsed, total_marks)
@@ -397,6 +417,11 @@ class Command(BaseCommand):
                                 for code, (count, sample_text) in offending.items():
                                     self.stderr.write(f"  code {code}: seen {count} times, sample text {sample_text!r}")
                                 self.stderr.write("Update Rankings/subject_maps.py with these codes before continuing.")
+                                for code in offending:
+                                    html = first_unknown_html.get(code)
+                                    if html:
+                                        self.stderr.write(f"\nRaw HTML of the first record containing code {code}:\n")
+                                        self.stderr.write(html)
 
                             if limit is not None and successes >= limit:
                                 limit_reached.set()

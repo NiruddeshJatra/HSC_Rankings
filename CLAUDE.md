@@ -6,6 +6,13 @@ publishing independently-computed merit rankings. Deployed on Vercel.
 ## File Structure
 
 ```
+.github/
+  workflows/scrape.yml  # workflow_dispatch-only remote scraper (sample|full modes);
+                         #   never calls publish_examset - see RUNBOOK.md
+  workflows/publish.yml # workflow_dispatch-only verify + publish/unpublish
+  scripts/sample_digest.py  # condenses --print-only output into a phone-readable
+                             #   one-line-per-record job summary
+RUNBOOK.md              # result-day procedure, written to be followed on a phone
 HSC_Rankings/
   settings.py          # DB (Supabase Postgres via pooler), security, context processors
   urls.py               # root URLconf
@@ -91,6 +98,13 @@ db_legacy.sqlite3        # gitignored backup only — never the active DB, never
   static asset change, not just collectstatic.
 - `publish_examset --publish` refuses if any row in that exam_type has
   `rank IS NULL` — this is an intentional data-integrity gate, not a bug.
+- The GitHub Actions workflows use the Supabase **session** pooler (port 5432),
+  not the transaction pooler the web app uses (6543): the scrape/rank/verify
+  path does bulk reads that transaction pooling breaks. Both workflows print the
+  connection host and assert `SELECT version()` says PostgreSQL before running.
+- `scrape_results` refuses to write into an exam_type whose `ExamSet` is already
+  published unless `--force` is passed (`--print-only` is exempt — it writes
+  nothing, so it stays usable as a pre-flight check against a live set).
 - Never hardcode `boardexamrankings.vercel.app` in templates/views — derive from
   `request`. Only allowed as the `ALLOWED_HOSTS` fallback default.
 - Individual result pages: no father/mother name, no reg_no, no `Person` JSON-LD,

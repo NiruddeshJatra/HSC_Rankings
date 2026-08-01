@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-08-01 — Remote result-day scraping via GitHub Actions, pre-flight hardening
+
+- New `.github/workflows/scrape.yml` (`workflow_dispatch` only): runs the
+  scrape from a phone on result day. `mode=sample` parses 20 rolls per group
+  with `--print-only` and writes nothing; `mode=full` scrapes with `--resume`,
+  then ranks and verifies. Per-group failures don't abort the other groups.
+  Uses the Supabase **session** pooler (port 5432) — transaction pooling breaks
+  the bulk reads `--resume` and `rank_students` perform — and asserts
+  `SELECT version()` says PostgreSQL before touching anything.
+- `publish_examset` is deliberately unreachable from that workflow. Going live
+  is a separate `.github/workflows/publish.yml` run (with an `unpublish`
+  toggle for rollback), taken after a human reads the verification output.
+- New `.github/scripts/sample_digest.py` condenses `--print-only` output from
+  ~12 lines per record to one, and flags blank names, blank result statuses,
+  out-of-range GPAs and unknown subject codes — the job summary is the whole
+  interface on the day, and it has to be readable on a phone.
+- New `RUNBOOK.md`: numbered result-day procedure with explicit stop
+  conditions, written to be followed on a phone.
+- `scrape_results` now refuses to write into an exam set whose rankings are
+  already published unless `--force` is passed, so a mistyped `--year` can't
+  overwrite a live set. `--print-only` is exempt — it writes nothing, so the
+  sample pre-flight still works against a published set.
+- The unknown-subject-code abort (50 occurrences) now prints the raw HTML of
+  the first record containing each offending code, not just the code and a
+  sample label — matching what the consecutive-failure abort already did.
+- `verify_examset` now fails on rows where `total_marks` is 0 while subject
+  columns hold marks (the HSC_2024 defect class). All three published exam
+  sets pass the new check; their remaining `total_marks == 0` rows are genuine
+  zero-mark candidates.
+
 ## 2026-07-28 — Data integrity fixes, group-URL bug, percentile, share card
 
 - Fixed live bug: ranking-page URLs built from the raw DB group value (e.g.
