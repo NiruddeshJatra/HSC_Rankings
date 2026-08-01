@@ -1,0 +1,369 @@
+# Scrape results — remote, phone-triggerable scraper for a new exam set.
+#
+# MOBILE SEQUENCE (this is the whole interface on result day):
+#   1. Open the GitHub app.
+#   2. Repo -> Actions -> "Scrape results".
+#   3. Tap "Run workflow".
+#   4. Fill in: exam, year, base_url (the board's individual-result path for THIS
+#      year — it changes annually), and the roll ranges for whichever groups you
+#      have. Leave a group's start/end blank to skip it.
+#   5. Set mode = "sample" and run. This parses 20 rolls per group and writes
+#      NOTHING to the database.
+#   6. Read the job summary. Check names, rolls, GPA, subject codes, marks.
+#      If anything looks wrong, STOP. Do not run "full".
+#   7. Re-run with mode = "full". Read the job summary and the verify output.
+#   8. Only then open the separate "Publish rankings" workflow and run it.
+#
+# PUBLISHING IS DELIBERATELY NOT PART OF THIS WORKFLOW. `publish_examset` is
+# never invoked here, at any mode, under any input. Going live is a separate,
+# human-gated action taken after a person has read the verification output —
+# see .github/workflows/publish.yml. Do not add a publish step to this file.
+#
+# See RUNBOOK.md for the full result-day procedure and stop conditions.
+
+name: Scrape results
+
+on:
+  workflow_dispatch:
+    inputs:
+      exam:
+        description: 'Exam (hsc or ssc)'
+        required: true
+        default: 'SSC'
+      year:
+        description: '4-digit exam year'
+        required: true
+        default: '2026'
+      base_url:
+        description: "Board individual-result base URL for this year (no default — it changes annually)"
+        required: true
+      science_start:
+        description: 'Science roll start (blank = skip group)'
+        required: false
+        default: ''
+      science_end:
+        description: 'Science roll end'
+        required: false
+        default: ''
+      business_start:
+        description: 'Business Studies roll start (blank = skip group)'
+        required: false
+        default: ''
+      business_end:
+        description: 'Business Studies roll end'
+        required: false
+        default: ''
+      humanities_start:
+        description: 'Humanities roll start (blank = skip group)'
+        required: false
+        default: ''
+      humanities_end:
+        description: 'Humanities roll end'
+        required: false
+        default: ''
+      workers:
+        description: 'Concurrent workers (hard cap 10 in the command)'
+        required: false
+        default: '5'
+      mode:
+        description: 'sample = 20 rolls per group, print only, no DB writes. full = real scrape + rank + verify.'
+        required: true
+        type: choice
+        default: 'sample'
+        options:
+          - sample
+          - full
+
+# Two overlapping runs would fight over the same rows and the same misses files.
+concurrency:
+  group: scrape-results
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # The site serves through Supabase's TRANSACTION pooler (port 6543), but this
+  # job must use the SESSION pooler (port 5432): transaction pooling has no
+  # server-side cursors and drops session state, which breaks the bulk reads
+  # this job performs (`--resume` reads every stored roll; rank_students reads
+  # a whole group). Store DATABASE_URL as a port-5432 session-pooler URL.
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DJANGO_DEBUG: '0'
+  # Nothing here serves HTTP, so a throwaway key is fine if no secret is set.
+  DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'ci-throwaway-key-no-http-served' }}
+  DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+  DJANGO_ENABLE_ADMIN: '0'
+  # EXAM_TYPE / EXAM_LOWER are set by the "Normalise inputs" step via $GITHUB_ENV.
+  # They are deliberately NOT declared here: a workflow-level env entry of the
+  # same name would shadow the value that step writes.
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Confirm database connection
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is not set."
+            exit 1
+          fi
+          python - <<'PY'
+          import os, sys, urllib.parse
+          u = urllib.parse.urlparse(os.environ["DATABASE_URL"])
+          print(f"scheme = {u.scheme}")
+          print(f"host   = {u.hostname}")
+          print(f"port   = {u.port}")
+          print(f"db     = {u.path.lstrip('/')}")
+          if not u.scheme.startswith(("postgres", "postgis")):
+              print(f"::error::DATABASE_URL is not a Postgres URL (scheme {u.scheme!r}). Refusing to run.")
+              sys.exit(1)
+          if u.port != 5432:
+              print(f"::warning::Port is {u.port}, expected 5432 (session pooler). "
+                    "The transaction pooler breaks the bulk reads this job performs.")
+          PY
+          # Prove it really is Postgres on the other end, not just a Postgres-shaped URL.
+          python manage.py shell -c "
+          from django.db import connection
+          with connection.cursor() as c:
+              c.execute('SELECT version()')
+              v = c.fetchone()[0]
+          print('server:', v)
+          assert 'PostgreSQL' in v, 'Connected database is not PostgreSQL'
+          print('host:', connection.settings_dict['HOST'], 'port:', connection.settings_dict['PORT'])
+          "
+
+      - name: Normalise inputs
+        run: |
+          set -euo pipefail
+          EXAM_LOWER=$(echo "${{ inputs.exam }}" | tr '[:upper:]' '[:lower:]')
+          EXAM_UPPER=$(echo "${{ inputs.exam }}" | tr '[:lower:]' '[:upper:]')
+          echo "EXAM_LOWER=$EXAM_LOWER" >> "$GITHUB_ENV"
+          echo "EXAM_TYPE=${EXAM_UPPER}_${{ inputs.year }}" >> "$GITHUB_ENV"
+          mkdir -p run-logs
+
+      # ---- SAMPLE MODE: pre-flight only. --print-only writes nothing to the DB. ----
+      - name: Sample (20 rolls per group, no DB writes)
+        if: ${{ inputs.mode == 'sample' }}
+        timeout-minutes: 20
+        run: |
+          set -uo pipefail
+          {
+            echo "## Sample — ${EXAM_TYPE}"
+            echo ""
+            echo "20 rolls per group, parsed and printed. **Nothing was written to the database.**"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          sample_group () {
+            NAME="$1"; START="$2"; END="$3"
+            if [ -z "$START" ]; then
+              echo "### $NAME" >> "$GITHUB_STEP_SUMMARY"
+              echo "skipped — no roll range given" >> "$GITHUB_STEP_SUMMARY"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+              return 0
+            fi
+            LOG="run-logs/sample-$NAME.log"
+            python manage.py scrape_results \
+              --exam "$EXAM_LOWER" --year "${{ inputs.year }}" \
+              --base-url "${{ inputs.base_url }}" \
+              --roll-start "$START" ${END:+--roll-end "$END"} \
+              --workers "${{ inputs.workers }}" \
+              --limit 20 --print-only 2>&1 | tee "$LOG"
+            RC=${PIPESTATUS[0]}
+            {
+              echo "### $NAME"
+              if [ "$RC" -eq 0 ]; then echo "status: ok"; else echo "status: **FAILED** (exit $RC)"; fi
+              echo ""
+              # One line per record instead of ~12 — the raw log is unreadable on a phone.
+              python .github/scripts/sample_digest.py "$LOG"
+              echo ""
+              echo "<details><summary>raw log</summary>"
+              echo ""
+              echo '```'
+              cat "$LOG"
+              echo '```'
+              echo ""
+              echo "</details>"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+            return 0
+          }
+
+          sample_group science "${{ inputs.science_start }}" "${{ inputs.science_end }}"
+          sample_group business "${{ inputs.business_start }}" "${{ inputs.business_end }}"
+          sample_group humanities "${{ inputs.humanities_start }}" "${{ inputs.humanities_end }}"
+
+          {
+            echo "---"
+            echo "Check each record: name present and not garbled, roll matches, GPA 0–5,"
+            echo "every subject code recognised, marks plausible, result status present."
+            echo "If anything looks wrong, **stop**. Do not run mode = full."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Stop after sample
+        if: ${{ inputs.mode == 'sample' }}
+        run: echo "Sample mode complete. Read the summary, then re-run with mode = full."
+
+      # ---- FULL MODE: real scrape. Per-group failures do not abort the others. ----
+      - name: Scrape (full)
+        if: ${{ inputs.mode == 'full' }}
+        timeout-minutes: 350
+        run: |
+          set -uo pipefail
+          {
+            echo "## Scrape — ${EXAM_TYPE}"
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          FAILED_GROUPS=""
+
+          scrape_group () {
+            NAME="$1"; START="$2"; END="$3"
+            if [ -z "$START" ] || [ -z "$END" ]; then
+              {
+                echo "### $NAME"
+                echo "skipped — no roll range given"
+                echo ""
+              } >> "$GITHUB_STEP_SUMMARY"
+              return 0
+            fi
+            LOG="run-logs/scrape-$NAME.log"
+            T0=$SECONDS
+            # Separate misses file per group — one shared default filename would
+            # let each group overwrite the previous group's misses.
+            python manage.py scrape_results \
+              --exam "$EXAM_LOWER" --year "${{ inputs.year }}" \
+              --base-url "${{ inputs.base_url }}" \
+              --roll-start "$START" --roll-end "$END" \
+              --workers "${{ inputs.workers }}" --resume \
+              --misses-file "misses_${EXAM_LOWER}_${{ inputs.year }}_${NAME}.txt" 2>&1 | tee "$LOG"
+            RC=${PIPESTATUS[0]}
+            ELAPSED=$((SECONDS - T0))
+
+            DONE_LINE=$(grep -E '^Done\.' "$LOG" | tail -1)
+            [ -n "$DONE_LINE" ] || DONE_LINE="(no completion line — the run did not finish)"
+            UNKNOWN=$(awk '/^Unknown subject codes seen this run:/{f=1;next} f&&/^  /{c++} END{print c+0}' "$LOG")
+            UNKNOWN_LIST=$(awk '/^Unknown subject codes seen this run:/{f=1;next} f&&/^  /{print "  " $0} f&&!/^  /{exit}' "$LOG")
+
+            {
+              echo "### $NAME"
+              if [ "$RC" -eq 0 ]; then
+                echo "status: ok · $((ELAPSED / 60))m $((ELAPSED % 60))s"
+              else
+                echo "status: **FAILED** (exit $RC) · $((ELAPSED / 60))m $((ELAPSED % 60))s"
+              fi
+              echo ""
+              echo "\`$DONE_LINE\`"
+              echo ""
+              echo "unknown subject codes: **$UNKNOWN** (must be 0)"
+              if [ "$UNKNOWN" -gt 0 ]; then
+                echo ""
+                echo '```'
+                echo "$UNKNOWN_LIST"
+                echo '```'
+              fi
+              if [ "$RC" -ne 0 ]; then
+                echo ""
+                echo "<details><summary>last 40 log lines</summary>"
+                echo ""
+                echo '```'
+                tail -40 "$LOG"
+                echo '```'
+                echo ""
+                echo "</details>"
+              fi
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
+
+            if [ "$RC" -ne 0 ]; then
+              FAILED_GROUPS="$FAILED_GROUPS $NAME"
+            fi
+            return 0
+          }
+
+          scrape_group science "${{ inputs.science_start }}" "${{ inputs.science_end }}"
+          scrape_group business "${{ inputs.business_start }}" "${{ inputs.business_end }}"
+          scrape_group humanities "${{ inputs.humanities_start }}" "${{ inputs.humanities_end }}"
+
+          if [ -n "$FAILED_GROUPS" ]; then
+            echo "FAILED_GROUPS=$FAILED_GROUPS" >> "$GITHUB_ENV"
+            echo "::warning::Groups that failed:$FAILED_GROUPS — ranking and verification still ran on what was stored."
+          fi
+
+      - name: Rank
+        if: ${{ inputs.mode == 'full' }}
+        timeout-minutes: 60
+        run: |
+          set -uo pipefail
+          python manage.py rank_students --exam-type "$EXAM_TYPE" --group all 2>&1 | tee run-logs/rank.log
+          RC=${PIPESTATUS[0]}
+          {
+            echo "## Ranking"
+            echo ""
+            echo '```'
+            tail -30 run-logs/rank.log
+            echo '```'
+            echo ""
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $RC
+
+      - name: Verify
+        # Runs even when the scrape or ranking step failed — a partial set still
+        # needs its verification report read.
+        if: ${{ !cancelled() && inputs.mode == 'full' }}
+        timeout-minutes: 30
+        run: |
+          set -uo pipefail
+          python manage.py verify_examset --exam-type "$EXAM_TYPE" 2>&1 | tee run-logs/verify.log
+          RC=${PIPESTATUS[0]}
+          {
+            echo "## Verification — $EXAM_TYPE"
+            echo ""
+            if [ "$RC" -eq 0 ]; then
+              echo "**PASSED.** Safe to publish once you have hand-checked 5 rolls against the board portal."
+            else
+              echo "**FAILED (exit $RC). Do not publish.** See RUNBOOK.md."
+            fi
+            echo ""
+            echo '```'
+            cat run-logs/verify.log
+            echo '```'
+            echo ""
+            echo "Publishing is a separate workflow: Actions -> \"Publish rankings\"."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $RC
+
+      - name: Upload misses and logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: scrape-artifacts-${{ inputs.exam }}-${{ inputs.year }}-${{ inputs.mode }}-${{ github.run_id }}
+          path: |
+            misses_*.txt
+            run-logs/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Fail the run if any group failed
+        if: ${{ inputs.mode == 'full' }}
+        run: |
+          set -uo pipefail
+          if [ -n "${FAILED_GROUPS:-}" ]; then
+            echo "::error::Groups that failed:${FAILED_GROUPS}"
+            exit 1
+          fi
+          echo "All requested groups completed."

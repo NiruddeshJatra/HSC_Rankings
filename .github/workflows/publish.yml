@@ -1,0 +1,147 @@
+# Publish rankings — the deliberate, human-gated go-live step.
+#
+# This is separate from "Scrape results" on purpose. Scraping is mechanical;
+# publishing is a decision, and it should only be taken by a person who has read
+# the scrape summary, read the verification output, and hand-checked a handful of
+# rolls against the board's own portal (see RUNBOOK.md).
+#
+# MOBILE SEQUENCE: GitHub app -> Actions -> "Publish rankings" -> Run workflow ->
+# type the exam_type (e.g. SSC_2026) -> Run.
+#
+# It re-runs verify_examset first and stops there if anything fails, and
+# publish_examset independently refuses to publish an exam set that still has
+# any row with rank IS NULL.
+#
+# To roll back: run this workflow with unpublish = true.
+
+name: Publish rankings
+
+on:
+  workflow_dispatch:
+    inputs:
+      exam_type:
+        description: 'Exam set to publish, e.g. SSC_2026'
+        required: true
+        default: 'SSC_2026'
+      unpublish:
+        description: 'Roll back instead: unpublish this exam set'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: publish-rankings
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Session pooler (port 5432), same as the scrape workflow — verify_examset
+  # reads every row of the exam set.
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DJANGO_DEBUG: '0'
+  DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY || 'ci-throwaway-key-no-http-served' }}
+  DJANGO_ALLOWED_HOSTS: 'localhost,127.0.0.1'
+  DJANGO_ENABLE_ADMIN: '0'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Confirm database connection
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is not set."
+            exit 1
+          fi
+          python - <<'PY'
+          import os, sys, urllib.parse
+          u = urllib.parse.urlparse(os.environ["DATABASE_URL"])
+          print(f"scheme = {u.scheme}")
+          print(f"host   = {u.hostname}")
+          print(f"port   = {u.port}")
+          print(f"db     = {u.path.lstrip('/')}")
+          if not u.scheme.startswith(("postgres", "postgis")):
+              print(f"::error::DATABASE_URL is not a Postgres URL (scheme {u.scheme!r}). Refusing to run.")
+              sys.exit(1)
+          if u.port != 5432:
+              print(f"::warning::Port is {u.port}, expected 5432 (session pooler).")
+          PY
+          python manage.py shell -c "
+          from django.db import connection
+          with connection.cursor() as c:
+              c.execute('SELECT version()')
+              v = c.fetchone()[0]
+          print('server:', v)
+          assert 'PostgreSQL' in v, 'Connected database is not PostgreSQL'
+          print('host:', connection.settings_dict['HOST'], 'port:', connection.settings_dict['PORT'])
+          "
+
+      - name: Unpublish
+        if: ${{ inputs.unpublish }}
+        run: |
+          set -uo pipefail
+          python manage.py publish_examset --exam-type "${{ inputs.exam_type }}" --unpublish 2>&1 | tee unpublish.log
+          RC=${PIPESTATUS[0]}
+          {
+            echo "## Unpublish — ${{ inputs.exam_type }}"
+            echo ""
+            echo '```'
+            cat unpublish.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $RC
+
+      - name: Verify before publishing
+        if: ${{ !inputs.unpublish }}
+        run: |
+          set -uo pipefail
+          python manage.py verify_examset --exam-type "${{ inputs.exam_type }}" 2>&1 | tee verify.log
+          RC=${PIPESTATUS[0]}
+          {
+            echo "## Verification — ${{ inputs.exam_type }}"
+            echo ""
+            if [ "$RC" -eq 0 ]; then
+              echo "**PASSED** — publishing now."
+            else
+              echo "**FAILED (exit $RC) — nothing was published.**"
+            fi
+            echo ""
+            echo '```'
+            cat verify.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $RC
+
+      - name: Publish
+        if: ${{ !inputs.unpublish }}
+        run: |
+          set -uo pipefail
+          python manage.py publish_examset --exam-type "${{ inputs.exam_type }}" --publish 2>&1 | tee publish.log
+          RC=${PIPESTATUS[0]}
+          {
+            echo "## Publish — ${{ inputs.exam_type }}"
+            echo ""
+            echo '```'
+            cat publish.log
+            echo '```'
+            echo ""
+            if [ "$RC" -eq 0 ]; then
+              echo "Now open the live site and check a group page and one individual result."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $RC

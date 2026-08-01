@@ -1,7 +1,14 @@
 from django.core.management.base import BaseCommand, CommandError
-from django.db.models import Count, Q
+from django.db.models import Count, IntegerField, Q
 
-from Rankings.models import StudentInfo
+from Rankings.models import Marks, StudentInfo
+
+# Every per-subject mark column on Marks (i.e. every integer column that is not
+# the primary key and not the total itself).
+SUBJECT_FIELDS = [
+    f.name for f in Marks._meta.concrete_fields
+    if isinstance(f, IntegerField) and not f.primary_key and f.name != 'total_marks'
+]
 
 GPA_BANDS = [
     (5.0, 5.0, '5.00'),
@@ -39,10 +46,24 @@ class Command(BaseCommand):
         self.stdout.write(f"Rows with rank IS NULL: {null_rank}")
         self.stdout.write(f"Rows with total_marks == 0: {zero_marks}")
         self.stdout.write(f"Rows with result IS NULL or blank: {blank_result}")
+
+        # The HSC_2024 defect: total_marks left at 0 while the subject columns
+        # actually hold marks. Such rows rank last and read as a zero score.
+        subject_nonzero = Q()
+        for field_name in SUBJECT_FIELDS:
+            subject_nonzero |= Q(**{f'marks__{field_name}__gt': 0})
+        broken_totals = qs.filter(marks__total_marks=0).filter(subject_nonzero)
+        broken_total_count = broken_totals.count()
+        self.stdout.write(f"Rows with total_marks == 0 but non-zero subject marks: {broken_total_count}")
+
         if null_rank:
             problems.append(f"{null_rank} rows with rank IS NULL")
         if blank_result:
             problems.append(f"{blank_result} rows with result IS NULL or blank")
+        if broken_total_count:
+            problems.append(f"{broken_total_count} rows with total_marks == 0 but non-zero subject marks")
+            for s in broken_totals.only('roll_no')[:10]:
+                self.stdout.write(f"  roll {s.roll_no}")
 
         # GPA distribution
         self.stdout.write("\nGPA distribution:")
