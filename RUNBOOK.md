@@ -74,7 +74,7 @@ This takes hours. It is safe to close the app and come back.
 Expected shape:
 
 - roughly **100k–130k rows** total across the three groups
-- failures a **small fraction of a percent**
+- failures are a **small fraction of a percent**
 - **zero unknown subject codes**
 
 A group that fails does not abort the others; failures are listed in the summary

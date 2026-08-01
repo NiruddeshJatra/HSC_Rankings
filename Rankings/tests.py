@@ -3,6 +3,7 @@ from django.core.management.base import CommandError
 from django.test import TestCase
 
 from Rankings.management.commands.rank_students import compute_competition_ranks
+from Rankings.management.commands.verify_examset import SUBJECT_FIELDS, nonzero_subject_marks_q
 from Rankings.models import ExamSet, Marks, StudentInfo
 from Rankings.subject_maxes import subject_max
 
@@ -79,12 +80,64 @@ class VerifyExamsetTests(TestCase):
         with self.assertRaises(CommandError):
             call_command('verify_examset', exam_type='SSC_2026')
 
+    def test_genuine_zero_total_rows_pass(self):
+        # A candidate who scored nothing has total_marks == 0 AND no subject
+        # marks. That is not the defect and must not fail verification — the
+        # published sets have hundreds of these rows.
+        make_student(1001, 1200, bangla=180)
+        make_student(1002, 0)
+        call_command('rank_students', exam_type='SSC_2026', group='all')
+
+        call_command('verify_examset', exam_type='SSC_2026')  # must not raise
+
     def test_passes_on_clean_data(self):
         make_student(1001, 1200, bangla=180)
         make_student(1002, 1100, bangla=170)
         call_command('rank_students', exam_type='SSC_2026', group='all')
 
         call_command('verify_examset', exam_type='SSC_2026')  # must not raise
+
+
+class SubjectFieldsTests(TestCase):
+    """Pin the integer columns verify_examset treats as subject marks.
+
+    This is a tripwire, not a second source of truth: adding a subject to Marks
+    fails this test, and the fix is to add the name here. Adding an integer
+    column that is NOT a subject mark also fails it, and the fix is to add the
+    name to NON_SUBJECT_INT_FIELDS instead — which is the case that would
+    otherwise silently corrupt the zero-total check.
+    """
+
+    EXPECTED = {
+        'bangla', 'english', 'math', 'physics', 'chemistry', 'biology',
+        'higher_math', 'ict', 'islam_moral', 'hindu_moral', 'buddha_moral',
+        'christian_moral', 'bangladesh_world', 'agriculture', 'home_science',
+        'finance_banking', 'accounting', 'business_ent', 'general_science',
+        'music', 'geography', 'civics', 'economics', 'history_bd', 'statistics',
+        'management', 'finance', 'production', 'logic', 'history',
+        'islamic_history', 'social_work', 'sociology', 'physical_education',
+        'career_education',
+    }
+
+    def test_subject_fields_match_expected(self):
+        self.assertEqual(set(SUBJECT_FIELDS), self.EXPECTED)
+
+    def test_total_marks_is_not_treated_as_a_subject(self):
+        self.assertNotIn('total_marks', SUBJECT_FIELDS)
+
+    def test_nonzero_subject_marks_q_is_not_a_tautology(self):
+        # Q() is falsy, so `Q() | Q(cond)` collapses to `Q(cond)` rather than
+        # matching everything. Locking that in: a row with no subject marks
+        # must not match.
+        zero = make_student(1001, 0)
+        scored = make_student(1002, 180, bangla=180)
+
+        matched = set(
+            StudentInfo.objects.filter(nonzero_subject_marks_q())
+            .values_list('roll_no', flat=True)
+        )
+        self.assertEqual(matched, {scored.roll_no})
+        self.assertNotIn(zero.roll_no, matched)
 
 
 class ScrapeGuardTests(TestCase):
