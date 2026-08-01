@@ -12,6 +12,9 @@ publishing independently-computed merit rankings. Deployed on Vercel.
   workflows/publish.yml # workflow_dispatch-only verify + publish/unpublish
   scripts/sample_digest.py  # condenses --print-only output into a phone-readable
                              #   one-line-per-record job summary
+  fixtures/             # 20 synthetic SSC result pages (rolls 300001-300020) for
+                         #   scrape_results --fixture-dir; 300018/300019 are
+                         #   deliberately broken. See fixtures/README.md
 RUNBOOK.md              # result-day procedure, written to be followed on a phone
 HSC_Rankings/
   settings.py          # DB (Supabase Postgres via pooler), security, context processors
@@ -105,6 +108,12 @@ db_legacy.sqlite3        # gitignored backup only — never the active DB, never
 - `scrape_results` refuses to write into an exam_type whose `ExamSet` is already
   published unless `--force` is passed (`--print-only` is exempt — it writes
   nothing, so it stays usable as a pre-flight check against a live set).
+- `scrape_results --fixture-dir <dir>` reads `<roll>.html` off disk instead of
+  issuing HTTP; everything downstream is the same code path. Fixtures in
+  `.github/fixtures/` are **synthetic** — never commit a real student's result
+  page, it carries the name/parents/reg_no the individual-result pages
+  deliberately omit. `fixture_mode` in `scrape.yml` refuses to run with
+  `mode=full`, since that would store invented students in the real exam set.
 - Never hardcode `boardexamrankings.vercel.app` in templates/views — derive from
   `request`. Only allowed as the `ALLOWED_HOSTS` fallback default.
 - Individual result pages: no father/mother name, no reg_no, no `Person` JSON-LD,

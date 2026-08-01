@@ -1,3 +1,7 @@
+from io import StringIO
+from pathlib import Path
+
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.test import TestCase
@@ -149,6 +153,65 @@ class ScrapeGuardTests(TestCase):
                 'scrape_results', exam='ssc', year='2025',
                 base_url='https://example.invalid/x', roll_start=1, limit=1,
             )
+
+
+class FixtureModeTests(TestCase):
+    """`--fixture-dir` must drive the same pipeline the HTTP path does.
+
+    Also pins what the fixtures contain: the rehearsal is only worth running if
+    the deliberately broken pages are still broken.
+    """
+
+    FIXTURES = Path(settings.BASE_DIR) / '.github' / 'fixtures'
+
+    def scrape(self, **kwargs):
+        out = StringIO()
+        call_command(
+            'scrape_results', exam='ssc', year='2025',
+            fixture_dir=str(self.FIXTURES),
+            roll_start=300001, roll_end=300020,
+            print_only=True, workers=1, stdout=out, stderr=out, **kwargs,
+        )
+        return out.getvalue()
+
+    def test_parses_every_fixture_without_http(self):
+        output = self.scrape()
+        self.assertIn('Done. processed=20 saved=20 missing=0 failed=0', output)
+
+    def test_unknown_subject_code_is_reported(self):
+        output = self.scrape()
+        self.assertIn('Unknown subject codes seen this run:', output)
+        self.assertIn('999', output)
+
+    def test_blank_result_fixture_still_parses(self):
+        # It must reach the digest as a record with an empty result, not be
+        # silently dropped — that is what makes it a useful warning case.
+        output = self.scrape()
+        self.assertIn('Roll: 300018', output)
+
+    def test_missing_fixture_counts_as_missing(self):
+        out = StringIO()
+        call_command(
+            'scrape_results', exam='ssc', year='2025',
+            fixture_dir=str(self.FIXTURES),
+            roll_start=399001, roll_end=399005,
+            print_only=True, workers=1, stdout=out, stderr=out,
+        )
+        self.assertIn('missing=5', out.getvalue())
+
+    def test_base_url_not_required_with_fixture_dir(self):
+        self.scrape()  # no base_url passed anywhere above
+
+    def test_base_url_still_required_without_fixture_dir(self):
+        with self.assertRaises(CommandError):
+            call_command('scrape_results', exam='ssc', year='2025',
+                         roll_start=1, limit=1, print_only=True)
+
+    def test_bad_fixture_dir_is_rejected(self):
+        with self.assertRaises(CommandError):
+            call_command('scrape_results', exam='ssc', year='2025',
+                         fixture_dir=str(self.FIXTURES / 'nope'),
+                         roll_start=1, limit=1, print_only=True)
 
 
 class SubjectMaxTests(TestCase):

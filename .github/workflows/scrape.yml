@@ -14,6 +14,16 @@
 #   7. Re-run with mode = "full". Read the job summary and the verify output.
 #   8. Only then open the separate "Publish rankings" workflow and run it.
 #
+# REHEARSING WITHOUT THE BOARD: tick `fixture_mode` and the scraper reads 20
+# saved SSC pages from .github/fixtures instead of issuing any HTTP request. It
+# exists because the board's endpoint is unavailable most of the year, and may be
+# unavailable on the morning it matters — so "does this workflow work?" has to be
+# answerable without it. Parsing, the roll assertion, the GPA range check,
+# unknown-code detection and the digest all run unchanged; two fixtures are
+# deliberately broken so the rehearsal proves the warning path fires. `base_url`
+# is not needed. Fixture mode refuses to run with mode=full, because storing
+# invented students in the real exam set is exactly what it must never do.
+#
 # PUBLISHING IS DELIBERATELY NOT PART OF THIS WORKFLOW. `publish_examset` is
 # never invoked here, at any mode, under any input. Going live is a separate,
 # human-gated action taken after a person has read the verification output —
@@ -35,8 +45,14 @@ on:
         required: true
         default: '2026'
       base_url:
-        description: "Board individual-result base URL for this year (no default — it changes annually)"
-        required: true
+        description: "Board individual-result base URL for this year (no default — it changes annually). Leave blank only with fixture_mode."
+        required: false
+        default: ''
+      fixture_mode:
+        description: 'Rehearse against .github/fixtures instead of the board. No HTTP, no base_url needed. sample only.'
+        required: false
+        type: boolean
+        default: false
       science_start:
         description: 'Science roll start (blank = skip group)'
         required: false
@@ -153,6 +169,27 @@ jobs:
           EXAM_UPPER=$(echo "${{ inputs.exam }}" | tr '[:lower:]' '[:upper:]')
           echo "EXAM_LOWER=$EXAM_LOWER" >> "$GITHUB_ENV"
           echo "EXAM_TYPE=${EXAM_UPPER}_${{ inputs.year }}" >> "$GITHUB_ENV"
+
+          # Fixture mode reads saved pages off disk instead of hitting the board,
+          # so this workflow can be rehearsed end to end when the board's endpoint
+          # is unavailable — which is most of the year, and possibly on the morning
+          # it matters. See .github/fixtures/README.md.
+          if [ "${{ inputs.fixture_mode }}" = "true" ]; then
+            # Fixture pages describe invented people. Storing them would put 20 fake
+            # students into the real exam set, so fixture mode is pre-flight only.
+            if [ "${{ inputs.mode }}" = "full" ]; then
+              echo "::error::fixture_mode cannot be used with mode=full — it would write fake students to the database. Use mode=sample."
+              exit 1
+            fi
+            echo "SOURCE_ARGS=--fixture-dir .github/fixtures" >> "$GITHUB_ENV"
+          else
+            if [ -z "${{ inputs.base_url }}" ]; then
+              echo "::error::base_url is required unless fixture_mode is enabled."
+              exit 1
+            fi
+            echo "SOURCE_ARGS=--base-url ${{ inputs.base_url }}" >> "$GITHUB_ENV"
+          fi
+
           mkdir -p run-logs
 
       # ---- SAMPLE MODE: pre-flight only. --print-only writes nothing to the DB. ----
@@ -177,9 +214,11 @@ jobs:
               return 0
             fi
             LOG="run-logs/sample-$NAME.log"
+            # $SOURCE_ARGS is --base-url <url> or --fixture-dir <dir>; unquoted on
+            # purpose so it splits into two words. Neither value contains spaces.
             python manage.py scrape_results \
               --exam "$EXAM_LOWER" --year "${{ inputs.year }}" \
-              --base-url "${{ inputs.base_url }}" \
+              $SOURCE_ARGS \
               --roll-start "$START" ${END:+--roll-end "$END"} \
               --workers "${{ inputs.workers }}" \
               --limit 20 --print-only 2>&1 | tee "$LOG"
@@ -247,7 +286,7 @@ jobs:
             # let each group overwrite the previous group's misses.
             python manage.py scrape_results \
               --exam "$EXAM_LOWER" --year "${{ inputs.year }}" \
-              --base-url "${{ inputs.base_url }}" \
+              $SOURCE_ARGS \
               --roll-start "$START" --roll-end "$END" \
               --workers "${{ inputs.workers }}" --resume \
               --misses-file "misses_${EXAM_LOWER}_${{ inputs.year }}_${NAME}.txt" 2>&1 | tee "$LOG"

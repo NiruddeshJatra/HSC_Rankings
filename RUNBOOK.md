@@ -15,9 +15,16 @@ worse than a day's delay.
 2. Confirm the `DATABASE_URL` secret exists: GitHub app → repo → Settings →
    Secrets → Actions. It must be the Supabase **session** pooler, **port 5432**
    (not 6543 — transaction pooling breaks this job's bulk reads).
-3. Confirm the rehearsal passed: run the "Scrape results" workflow with
-   `exam=SSC`, `year=2025`, the 2025 base URL, a narrow roll range, and
-   `mode=sample`. It must print records and write nothing.
+3. Confirm the rehearsal passed. Two ways, either is fine:
+   - **Without the board** (works any time of year): run "Scrape results" with
+     `fixture_mode` ticked, `mode=sample`, `science_start=300001`,
+     `science_end=300020`. Leave `base_url` blank. It reads 20 saved pages from
+     `.github/fixtures` and issues no HTTP.
+     **It must report exactly 3 warnings** — a blank result and a missing GPA on
+     roll `300018`, an unknown subject code `999` on roll `300019`. Zero warnings
+     means the check itself is broken, not that the data is clean.
+   - **Against the board**: `exam=SSC`, `year=2025`, the 2025 base URL, a narrow
+     roll range, `mode=sample`. It must print records and write nothing.
 4. Confirm `SSC_2026` either has no `ExamSet` row yet, or has one with
    `rankings_published = False`.
 
