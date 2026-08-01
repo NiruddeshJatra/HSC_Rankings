@@ -3,12 +3,28 @@ from django.db.models import Count, IntegerField, Q
 
 from Rankings.models import Marks, StudentInfo
 
-# Every per-subject mark column on Marks (i.e. every integer column that is not
-# the primary key and not the total itself).
+# Integer columns on Marks that are NOT a subject's mark. Every other integer
+# column is treated as one. Discovery is deliberate: a subject is added to Marks
+# most years, and a hand-maintained list would silently go stale and quietly
+# shrink this check. Anything added to Marks that is an integer but not a
+# subject mark (a flag, a counter) must be listed here — SubjectFieldsTests
+# fails if the derived list changes, so it cannot drift unnoticed.
+NON_SUBJECT_INT_FIELDS = {'total_marks'}
+
 SUBJECT_FIELDS = [
     f.name for f in Marks._meta.concrete_fields
-    if isinstance(f, IntegerField) and not f.primary_key and f.name != 'total_marks'
+    if isinstance(f, IntegerField)
+    and not f.primary_key
+    and f.name not in NON_SUBJECT_INT_FIELDS
 ]
+
+
+def nonzero_subject_marks_q():
+    """Matches a StudentInfo whose Marks row has any subject column above zero."""
+    q = Q()
+    for field_name in SUBJECT_FIELDS:
+        q |= Q(**{f'marks__{field_name}__gt': 0})
+    return q
 
 GPA_BANDS = [
     (5.0, 5.0, '5.00'),
@@ -49,10 +65,7 @@ class Command(BaseCommand):
 
         # The HSC_2024 defect: total_marks left at 0 while the subject columns
         # actually hold marks. Such rows rank last and read as a zero score.
-        subject_nonzero = Q()
-        for field_name in SUBJECT_FIELDS:
-            subject_nonzero |= Q(**{f'marks__{field_name}__gt': 0})
-        broken_totals = qs.filter(marks__total_marks=0).filter(subject_nonzero)
+        broken_totals = qs.filter(marks__total_marks=0).filter(nonzero_subject_marks_q())
         broken_total_count = broken_totals.count()
         self.stdout.write(f"Rows with total_marks == 0 but non-zero subject marks: {broken_total_count}")
 
